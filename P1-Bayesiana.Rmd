@@ -64,7 +64,7 @@ Preencher aqui
 Preencher aqui
 
 
-```{r cars}
-summary(cars) # teste
+```{r}
+
 ```
 

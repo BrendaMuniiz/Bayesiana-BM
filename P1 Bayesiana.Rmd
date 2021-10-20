@@ -1,5 +1,5 @@
 ---
-title: "Bayesiana P1"
+title: "Bayesiana"
 author:
   - Brenda da Silva Muniz 11811603
   - Mônica Amaral Novelli 11810453
@@ -11,9 +11,22 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 # Problema dado
 
 Considera-se um conjunto histórico de dados de densidade do solo em uma região registrados por Henry Cavendish no século XVIII. Agora, supõe-se que, de experimentos e medições prévios, a priori para θ, densidade da terra, é considerada ser N(5,4; 0,01). O pesquisador registrou 23 medidas da densidade do solo. Para estes dados, temos a média de y = 5,48 e supõe-se aqui que a variância de seu erro de medida é conhecida e igual a 0,04. Então, temos que a posteriori é simplesmente obtida através da fórmula acima como sendo θ|y ∼ N(5,46; 0,00303).
+
+```{r}
+# install.packages("mas3321", repos="http://R-Forge.R-project.org")
+library(mas3321)
+```
+
+```{r}
+
+data(cavendish)
+
+dados<- cavendish[['earth_density']]
+```
 
 ## Priori informativa
 
@@ -40,10 +53,23 @@ $f_X(x) = \frac{1}{√2πσ^2}\exp({-\frac{1}{2σ^2}(x − μ)})$
 
 E nossa função de distribuição conjunta $f_{X_1,X_2,...,X_n}(x_1, x_2, . . . , x_n)$
 
-$\prod_{i = 1}^{n} f_X(x_i) =  \prod_{i=1}^{n} \frac{1}{\sqrt{2\piσ^2}}\exp(-\frac{1}{{2σ^2}}(x_i − μ)^2$
+$\prod_{i = 1}^{n} f_X(x_i) =  \prod_{i=1}^{n} \frac{1}{\sqrt{2\piσ^2}}\exp(-\frac{1}{{2σ^2}}(x_i − μ)^2 = (\frac{1}{\sqrt{2\piσ^2}})^{n/2}\exp(-\frac{1}{{2σ^2}}\sum_{i=1}^{n} (x_i − μ)^2)$
 
+Temos que:
 
-Para uma amostra de tamanho n, a função de verossimilhança pode ser escrita como:
+$\sum_{i=1}^{n}(x_i − μ)^2 =  \sum_{i=1}^{n} (x_i -\overline{x} )^2 + 2(\overline{x} - μ) \sum_{i=1}^{n}(x_i -\overline{x} ) + \sum_{i=1}^{n}(\overline{x} - μ)^2  $
+
+E, desprezando as constantes, ficamos com: 
+
+$ \sum_{i=1}^{n} (x_i − μ)^2   ∝ n(μ - \overline{x})^2 $
+ 
+Desse modo, para uma amostra de tamanho n, a função de verossimilhança pode ser escrita como:
+
+$ L(θ) = L(μ) ∝ \exp(-\frac{1}{2σ^2}\sum_{i=1}^{n}(x_i − μ)^2 ∝ \exp(−\frac{n}{2σ^2}(μ − \overline{x})^2) $
+
+Com isso, temos:
+
+?????
 
 $l(θ; x) = (2πσ^2)^{−n/2}\exp{\frac{−1}{2σ^2} \sum_{i=1}^{n} (x_i − θ)^2}∝ \exp{\frac{−n}{2σ^2} (\overline{x}− θ)^2}$
 
@@ -52,9 +78,54 @@ $l(θ; x) = (2πσ^2)^{−n/2}\exp{\frac{−1}{2σ^2} \sum_{i=1}^{n} (x_i − θ
 
 A distribuição a posteriori de θ dado x é $N(µ_1, {τ_1}^2)$ sendo
 
-$µ1 = {\frac{{τ_0}^{−2}µ_0 + nσ^{−2}\overline{x}}{{τ_0}^{−2}+ nσ^{−2}}}$ e ${τ_1}^{−2} = {τ_0}^{-2} + nσ^{−2}.$
+$µ_1 = {\frac{{τ_0}^{−2}µ_0 + nσ^{−2}\overline{x}}{{τ_0}^{−2}+ nσ^{−2}}}$ e ${τ_1}^{−2} = {τ_0}^{-2} + nσ^{−2}.$
 
 
+!!!!!!!!! Logo, para uma distribuição Normal com variância conhecida, a média a posteriori $µ_n$ pode ser interpretada como a média ponderada da média a priori e o valor observado y = y1, ..., yn, sendo os pesos proporcionais às precisões de cada um. 
+
+
+# informacao dos dados: dist. normal com variancia conhecida = sigma2
+
+```{r}
+ n = 23
+ xbarra = 5.48
+ var(dados)
+ var(dados)/n
+ sigma2 = 0.04 # variancia conhecida
+```
+ 
+```{r}
+ # funcao de verossimilhanca
+ f.vero = function(mu, dados) prod(dnorm(dados,mu,sqrt(sigma2)))
+ mu.seq = seq(0,10,0.01)
+ vero = sapply(mu.seq,f.vero,dados = dados)
+
+```
+
+```{r}
+# grafico da funcao de verossimilhanca       
+ plot(mu.seq,vero,  col = "blue", type= "l", xlab = expression(mu), ylab = "density")
+```
+```{r}
+ # grafico da densidade da media dos dados
+ plot(mu.seq,dnorm(mean(dados),mu.seq,sqrt(sigma2/n)), type="l",col = "green")
+
+# informacao a priori
+ nu = 10
+ tau2 = 1
+ lines(density(rnorm(1000,nu,sqrt(tau2))))
+ 
+  # informacao a posteriori
+ (media_posteriori = (n * xbarra * tau2 + nu * sigma2) / (n * tau2 + sigma2))
+ (var_posteriori = sigma2 * tau2 / (n * tau2 + sigma2))
+ lines(density(rnorm(1000,media_posteriori,sqrt(var_posteriori))), col = "red")
+```
+ 
+```{r} 
+
+```
+ 
+ 
 ## Resumo a posteriori com a priori informativa
 
 Preencher aqui
@@ -64,7 +135,4 @@ Preencher aqui
 Preencher aqui
 
 
-```{r cars}
-summary(cars) # teste
-```
 
