@@ -1,0 +1,26 @@
+---
+title: "Bayesiana P1"
+author:
+  - Brenda da Silva Muniz 11811603
+  - Mônica Amaral Novelli 11810453
+date: "Setembro 2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Teste
+
+```{r cars}
+summary(cars)
+```
+
+Teste 2
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Teste
