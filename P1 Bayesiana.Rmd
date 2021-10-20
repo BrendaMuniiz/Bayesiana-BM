@@ -134,22 +134,37 @@ plot(mu,dnorm(mu,mu.post,dp.post),type="l",
      ylab=expression(pi(mu/y)))
 
 ## Resumo a posteriori com a priori informativa
-Se $ X_1,\dots,X_n$ é uma amostra aleatória da $ N(\theta,\s)$ com $ \s$ conhecido e usarmos a priori conjugada, i.e. $ \theta\sim
-N(\mu_0,\tau_0^2)$ então a posteriori também será normal e neste caso média, mediana e moda coincidem. Portanto, o estimador de Bayes de $ \theta$ é dado por
-$\displaystyle \delta(\bfX)=\frac{\tau_0^{-2}\mu_0+n\invs\overline{\bfX}}{\tau_0^{-2}+n\invs}.
-$
 
-estimador_de_bayes = ((1/0.01)*5.4+23*0.04*5.48)/((1/0.01)+23*0.04)
+Para uma única observação vimos a família de distribuições normais é conjugada ao modelo normal. Para uma amostra de tamanho n, a função de verossimilhança pode ser escrita como
+
+$ L(θ) = L(μ) ∝ \exp (−\frac{n}{2σ^2} (\overline{x} - \theta)^2}) $
+
+onde os termos que não dependem de θ foram incorporados á constante de proporcionalidade. Portanto, a verossimilhança tem a mesma forma daquela baseada em uma única observação bastando substituir x por ${\overline{X}}$ e $σ^2$ por $σ^2/n$
+Logo,  com as devidas substituições, i.e. a distribuição a posteriori de {/θ} dado x é
+onde:
+ = $\displaystyle \delta(X)=\frac{\tau_0^{-2}\mu_0+nσ^{-2}{\overline{X}}}{\tau_0^{-2}+nσ^{-2}}$
+
+ e $\tau_1^{-2}=\tau_0^{-2}+nσ^{-2}$
+
+Seguindo esta lógica, 
+Se $ X_1,\dots,X_n$ é uma amostra aleatória da $ N(\theta,σ^2)$ com $ σ^2$ conhecido e usarmos a priori conjugada, i.e. $ \theta\sim N(\mu_0,\tau_0^2)$ então a posteriori também será normal e neste caso média, mediana e moda coincidem. Portanto, o estimador de Bayes de $ \theta$ é dado por:
+$$\displaystyle \delta(X)=\frac{\tau_0^{-2}\mu_0+nσ^{-2}{\overline{X}}}{\tau_0^{-2}+nσ^{-2}}$$
+
+```{r}
+estimador_de_bayes = ((1/0.01)*5.4+23*((1/(0.04*2))*5.48))/((1/0.01)+23*(1/(0.04*2)))
+```
 
 ```{r tabdis5}
 tibble(      Priori = c("Priori"),
              Media.pri = c(5.4),
-             Media.pos = c(5.48),
+             Media.pos = c(5.46),
+             Mediana.post = c(5.46),
+             Moda.post=c(5.46),
              SD.pri = c(0.1),
              SD.pos = c(0.2),
-             IC.025 = c(qnorm(0.025, mean = 5.48 , sd = 0.2)),
-             IC.975 = c(qnorm(0.975, mean = 5.48 , sd = 0.2)))%>%
-  knitr::kable(digits = 2, caption = "Resumo aposteriori (n=23)")
+             IC.025 = c(qnorm(0.025, mean = 5.46 , sd = 0.2)),
+             IC.975 = c(qnorm(0.975, mean = 5.46 , sd = 0.2)))%>%
+  knitr::kable(digits = 2           , caption = "Resumo aposteriori (n=23)")
 ```
 
 ## Resumo a posteriori com a priori não informativa
