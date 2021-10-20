@@ -56,7 +56,15 @@ Em que $I(\theta)$ é a medida de informação esperada de Fisher de θ através
 
 $I(θ) = E[-\frac{∂^2log p(x|\theta)}{∂\theta^2}]$
 
-$−E[\frac{∂^2}{∂θ^2}\frac{(−log(2πσ^2)}{2} − \frac{1}{2σ^2}\sum_{i = 1}^{n}(y_i − θ)^2]= −E[\frac{∂^2}{∂θ^2}\frac{(−log(2πσ^2)}{2} − \frac{1}{2σ^2}\sum_{i = 1}^{n}(y_i^2 − 2θn\overline{y} + nθ^2)]= −E[\frac{∂}{∂θ} − (\frac{1}{2σ^2}(-2n\overline{y} + 2nθ))]= -E [\frac{1}{2σ^2}(2n)] = \frac{n}{σ^2}$
+$T_0^2$ deve tender ao infinito, e, a partir disso temos que:
+
+$μ_1 -> \overline{x} $
+
+$T_1^{-2} -> −E[\frac{∂^2}{∂θ^2}\frac{(−log(2πσ^2)}{2} − \frac{1}{2σ^2}\sum_{i = 1}^{n}(y_i − θ)^2]= −E[\frac{∂^2}{∂θ^2}\frac{(−log(2πσ^2)}{2} − \frac{1}{2σ^2}\sum_{i = 1}^{n}(y_i^2 − 2θn\overline{y} + nθ^2)]= −E[\frac{∂}{∂θ} − (\frac{1}{2σ^2}(-2n\overline{y} + 2nθ))]= -E [\frac{1}{2σ^2}(2n)] = \frac{n}{σ^2}$
+
+```{r}
+
+```
 
 
 ## Verossimilhança
@@ -159,5 +167,18 @@ tibble(      Priori = c("Priori"),
 ```
 
 ## Resumo a posteriori com a priori não informativa
+
+
+## Gráfico Posteriori com a priori não informativa
+
+```{r} 
+muJ.post <- xbarra
+dpJ.post <- n*sigma2^2
+
+plot(mu,dnorm(mu,muJ.post,dpJ.post),type="l",
+     col="#00FFFF",lty=1,pch=18,   
+     xlab=expression(mu),
+     ylab=expression(pi(mu/y)))
+```
 
 ## Preditiva
