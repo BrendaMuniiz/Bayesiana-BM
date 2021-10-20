@@ -134,6 +134,12 @@ plot(mu,dnorm(mu,mu.post,dp.post),type="l",
      ylab=expression(pi(mu/y)))
 
 ## Resumo a posteriori com a priori informativa
+Se $ X_1,\dots,X_n$ é uma amostra aleatória da $ N(\theta,\s)$ com $ \s$ conhecido e usarmos a priori conjugada, i.e. $ \theta\sim
+N(\mu_0,\tau_0^2)$ então a posteriori também será normal e neste caso média, mediana e moda coincidem. Portanto, o estimador de Bayes de $ \theta$ é dado por
+$\displaystyle \delta(\bfX)=\frac{\tau_0^{-2}\mu_0+n\invs\overline{\bfX}}{\tau_0^{-2}+n\invs}.
+$
+
+estimador_de_bayes = ((1/0.01)*5.4+23*0.04*5.48)/((1/0.01)+23*0.04)
 
 ```{r tabdis5}
 tibble(      Priori = c("Priori"),
