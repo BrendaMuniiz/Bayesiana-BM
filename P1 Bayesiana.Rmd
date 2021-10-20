@@ -30,7 +30,7 @@ dados<- cavendish[['earth_density']]
 
 Conforme nos foi dado no enunciado, temos que a distribuição Priori informativa é dada por  N(5,4; 0,01) sendo $\theta \sim \mathcal{N}(y_0, \tau_0^2)$ com média $y_0$ e variância $\tau_0^2$
 
-## #gráfico da distribuição priori informativa- (ver melhor mu) ?acrescentar aqui ou só depois das três distribuições juntas
+## gráfico da distribuição priori informativa- (ver melhor mu) ?acrescentar aqui ou só depois das três distribuições juntas
 
 ```{r}
 mu.0 <- 5.4
@@ -56,6 +56,7 @@ Em que $I(\theta)$ é a medida de informação esperada de Fisher de θ através
 
 $I(θ) = E[-\frac{∂^2log p(x|\theta)}{∂\theta^2}]$
 
+$−E[\frac{∂^2}{∂θ^2}\frac{(−log(2πσ^2)}{2} − \frac{1}{2σ^2}\sum_{i = 1}^{n}(y_i − θ)^2]= −E[\frac{∂^2}{∂θ^2}\frac{(−log(2πσ^2)}{2} − \frac{1}{2σ^2}\sum_{i = 1}^{n}(y_i^2 − 2θn\overline{y} + nθ^2)]= −E[\frac{∂}{∂θ} − (\frac{1}{2σ^2}(-2n\overline{y} + 2nθ))]= -E [\frac{1}{2σ^2}(2n)] = \frac{n}{σ^2}$
 
 
 ## Verossimilhança
@@ -96,7 +97,7 @@ $ L(θ) = L(μ) ∝ \exp(-\frac{1}{2σ^2}\sum_{i=1}^{n}(x_i − μ)^2 ∝ \exp(�
 ```{r}
  # funcao de verossimilhanca
  f.vero = function(mu, dados) prod(dnorm(dados,mu,sqrt(sigma2)))
- mu.seq = seq(0,10,0.1)
+ mu.seq = seq(0,10,0.01)
  vero = sapply(mu.seq,f.vero,dados = dados)
 
 ```
@@ -159,10 +160,4 @@ tibble(      Priori = c("Priori"),
 
 ## Resumo a posteriori com a priori não informativa
 
-Preencher aqui
-
-
-```{r cars}
-summary(cars) # teste
-```
 ## Preditiva
