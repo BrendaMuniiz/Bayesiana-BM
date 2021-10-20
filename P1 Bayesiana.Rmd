@@ -15,11 +15,24 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Considera-se um conjunto histórico de dados de densidade do solo em uma região registrados por Henry Cavendish no século XVIII. Agora, supõe-se que, de experimentos e medições prévios, a priori para θ, densidade da terra, é considerada ser N(5,4; 0,01). O pesquisador registrou 23 medidas da densidade do solo. Para estes dados, temos a média de y = 5,48 e supõe-se aqui que a variância de seu erro de medida é conhecida e igual a 0,04. Então, temos que a posteriori é simplesmente obtida através da fórmula acima como sendo θ|y ∼ N(5,46; 0,00303).
 
+```{r}
+
+# install.packages("mas3321", repos="http://R-Forge.R-project.org")
+library(mas3321)
+
+data(cavendish)
+
+dados<- cavendish[['earth_density']]
+
+```
+
 ## Priori informativa
 
 Conforme nos foi dado no enunciado, temos que a distribuição Priori informativa é dada por  N(5,4; 0,01) sendo $\theta \sim \mathcal{N}(y_0, \tau_0^2)$ com média $y_0$ e variância $\tau_0^2$
 
 ## #gráfico da distribuição priori informativa- (ver melhor mu) ?acrescentar aqui ou só depois das três distribuições juntas
+
+```{r}
 mu.0 <- 5.4
 dp.0 <- 0.1
 mu <- seq(4,7,0.01)
@@ -31,7 +44,7 @@ legend(4, 3.7,
        legend=c("Priori informativa"),
        col=c("#FF0080"),
        lty=1:2,pch=c(7,6),cex=0.6)
-
+```
 
 ## Priori não informativa de Jeffreys
 
@@ -42,6 +55,7 @@ $p(θ) ∝ [I(θ)]^{1/2}$
 Em que $I(\theta)$ é a medida de informação esperada de Fisher de θ através de X que é definida como:
 
 $I(θ) = E[-\frac{∂^2log p(x|\theta)}{∂\theta^2}]$
+
 
 
 ## Verossimilhança
@@ -82,7 +96,7 @@ $ L(θ) = L(μ) ∝ \exp(-\frac{1}{2σ^2}\sum_{i=1}^{n}(x_i − μ)^2 ∝ \exp(�
 ```{r}
  # funcao de verossimilhanca
  f.vero = function(mu, dados) prod(dnorm(dados,mu,sqrt(sigma2)))
- mu.seq = seq(0,10,0.01)
+ mu.seq = seq(0,10,0.1)
  vero = sapply(mu.seq,f.vero,dados = dados)
 
 ```
@@ -120,6 +134,8 @@ $µ1 = {\frac{{τ_0}^{−2}µ_0 + nσ^{−2}\overline{x}}{{τ_0}^{−2}+ nσ^{�
 
 
 ## Gráfico Posteriori com a priori informativa
+
+```{r} 
 mu.post <- 5.46
 dp.post <- 0.00303
 
@@ -127,7 +143,7 @@ plot(mu,dnorm(mu,mu.post,dp.post),type="l",
      col="#00FFFF",lty=1,pch=18,   
      xlab=expression(mu),
      ylab=expression(pi(mu/y)))
-
+```
 ## Resumo a posteriori com a priori informativa
 
 ```{r tabdis5}
