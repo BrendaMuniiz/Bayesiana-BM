@@ -10,29 +10,21 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+```{r pkg-load, message = FALSE}
+library(tidyverse)
+library(effectsize)
+library(invgamma)
+```
 
 # Problema dado
 
 Considera-se um conjunto histórico de dados de densidade do solo em uma região registrados por Henry Cavendish no século XVIII. Agora, supõe-se que, de experimentos e medições prévios, a priori para θ, densidade da terra, é considerada ser N(5,4; 0,01). O pesquisador registrou 23 medidas da densidade do solo. Para estes dados, temos a média de y = 5,48 e supõe-se aqui que a variância de seu erro de medida é conhecida e igual a 0,04. Então, temos que a posteriori é simplesmente obtida através da fórmula acima como sendo θ|y ∼ N(5,46; 0,00303).
 
-```{r}
-
-# install.packages("mas3321", repos="http://R-Forge.R-project.org")
-library(mas3321)
-
-data(cavendish)
-
-dados<- cavendish[['earth_density']]
-
-```
-
 ## Priori informativa
 
 Conforme nos foi dado no enunciado, temos que a distribuição Priori informativa é dada por  N(5,4; 0,01) sendo $\theta \sim \mathcal{N}(y_0, \tau_0^2)$ com média $y_0$ e variância $\tau_0^2$
 
-## gráfico da distribuição priori informativa- (ver melhor mu) ?acrescentar aqui ou só depois das três distribuições juntas
-
-```{r}
+## #gráfico da distribuição priori informativa
 mu.0 <- 5.4
 dp.0 <- 0.1
 mu <- seq(4,7,0.01)
@@ -44,7 +36,7 @@ legend(4, 3.7,
        legend=c("Priori informativa"),
        col=c("#FF0080"),
        lty=1:2,pch=c(7,6),cex=0.6)
-```
+
 
 ## Priori não informativa de Jeffreys
 
@@ -55,16 +47,6 @@ $p(θ) ∝ [I(θ)]^{1/2}$
 Em que $I(\theta)$ é a medida de informação esperada de Fisher de θ através de X que é definida como:
 
 $I(θ) = E[-\frac{∂^2log p(x|\theta)}{∂\theta^2}]$
-
-$T_0^2$ deve tender ao infinito, e, a partir disso temos que:
-
-$μ_1 -> \overline{x} $
-
-$T_1^{-2} -> −E[\frac{∂^2}{∂θ^2}\frac{(−log(2πσ^2)}{2} − \frac{1}{2σ^2}\sum_{i = 1}^{n}(y_i − θ)^2]= −E[\frac{∂^2}{∂θ^2}\frac{(−log(2πσ^2)}{2} − \frac{1}{2σ^2}\sum_{i = 1}^{n}(y_i^2 − 2θn\overline{y} + nθ^2)]= −E[\frac{∂}{∂θ} − (\frac{1}{2σ^2}(-2n\overline{y} + 2nθ))]= -E [\frac{1}{2σ^2}(2n)] = \frac{n}{σ^2}$
-
-```{r}
-
-```
 
 
 ## Verossimilhança
@@ -84,7 +66,7 @@ Temos que:
 
 $\sum_{i=1}^{n}(x_i − μ)^2 =  \sum_{i=1}^{n} (x_i -\overline{x} )^2 + 2(\overline{x} - μ) \sum_{i=1}^{n}(x_i -\overline{x} ) + \sum_{i=1}^{n}(\overline{x} - μ)^2  $
 
-E, desprezando as constantes, ficamos com: 
+E, desprezando as constantes, ficamos com:
 
 $ \sum_{i=1}^{n} (x_i − μ)^2   ∝ n(μ - \overline{x})^2 $
 
@@ -101,7 +83,7 @@ $ L(θ) = L(μ) ∝ \exp(-\frac{1}{2σ^2}\sum_{i=1}^{n}(x_i − μ)^2 ∝ \exp(�
  var(dados)/n
  sigma2 = 0.04 # variancia conhecida
 ```
- 
+
 ```{r}
  # funcao de verossimilhanca
  f.vero = function(mu, dados) prod(dnorm(dados,mu,sqrt(sigma2)))
@@ -122,14 +104,14 @@ $ L(θ) = L(μ) ∝ \exp(-\frac{1}{2σ^2}\sum_{i=1}^{n}(x_i − μ)^2 ∝ \exp(�
  nu = 10
  tau2 = 1
  lines(density(rnorm(1000,nu,sqrt(tau2))))
- 
+
   # informacao a posteriori
  (media_posteriori = (n * xbarra * tau2 + nu * sigma2) / (n * tau2 + sigma2))
  (var_posteriori = sigma2 * tau2 / (n * tau2 + sigma2))
  lines(density(rnorm(1000,media_posteriori,sqrt(var_posteriori))), col = "red")
 ```
- 
-```{r} 
+
+```{r}
 
 ```
 
@@ -143,8 +125,6 @@ $µ1 = {\frac{{τ_0}^{−2}µ_0 + nσ^{−2}\overline{x}}{{τ_0}^{−2}+ nσ^{�
 
 
 ## Gráfico Posteriori com a priori informativa
-
-```{r} 
 mu.post <- 5.46
 dp.post <- 0.00303
 
@@ -152,7 +132,7 @@ plot(mu,dnorm(mu,mu.post,dp.post),type="l",
      col="#00FFFF",lty=1,pch=18,   
      xlab=expression(mu),
      ylab=expression(pi(mu/y)))
-```
+
 ## Resumo a posteriori com a priori informativa
 
 ```{r tabdis5}
@@ -168,17 +148,10 @@ tibble(      Priori = c("Priori"),
 
 ## Resumo a posteriori com a priori não informativa
 
+Preencher aqui
 
-## Gráfico Posteriori com a priori não informativa
 
-```{r} 
-muJ.post <- xbarra
-dpJ.post <- n*sigma2^2
-
-plot(mu,dnorm(mu,muJ.post,dpJ.post),type="l",
-     col="#00FFFF",lty=1,pch=18,   
-     xlab=expression(mu),
-     ylab=expression(pi(mu/y)))
+```{r cars}
+summary(cars) # teste
 ```
-
 ## Preditiva
