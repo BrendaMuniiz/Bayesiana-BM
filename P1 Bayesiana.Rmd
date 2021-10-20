@@ -64,7 +64,9 @@ Preencher aqui
 Preencher aqui
 
 
-```{r cars}
-summary(cars) # teste
+```{r}
+install.packages('rmarkdown')
+install.packages('tinytex')
+tinytex::install_tinytex()
 ```
 
