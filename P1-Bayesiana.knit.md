@@ -1,5 +1,5 @@
 ---
-title: "Bayesiana"
+title: "Bayesiana P1"
 author:
   - Brenda da Silva Muniz 11811603
   - Mônica Amaral Novelli 11810453
@@ -7,9 +7,7 @@ date: "Setembro 2021"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 # Problema dado
 
@@ -52,7 +50,7 @@ $l(θ; x) = (2πσ^2)^{−n/2}\exp{\frac{−1}{2σ^2} \sum_{i=1}^{n} (x_i − θ
 
 A distribuição a posteriori de θ dado x é $N(µ_1, {τ_1}^2)$ sendo
 
-$µ_1 = {\frac{{τ_0}^{−2}µ_0 + nσ^{−2}\overline{x}}{{τ_0}^{−2}+ nσ^{−2}}}$ e ${τ_1}^{−2} = {τ_0}^{-2} + nσ^{−2}.$
+$µ1 = {\frac{{τ_0}^{−2}µ_0 + nσ^{−2}\overline{x}}{{τ_0}^{−2}+ nσ^{−2}}}$ e ${τ_1}^{−2} = {τ_0}^{-2} + nσ^{−2}.$
 
 
 ## Resumo a posteriori com a priori informativa
@@ -62,6 +60,7 @@ Preencher aqui
 ## Resumo a posteriori com a priori não informativa
 
 Preencher aqui
+
 
 
 
