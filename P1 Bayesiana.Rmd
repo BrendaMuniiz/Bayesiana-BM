@@ -198,10 +198,21 @@ tibble(      Priori = c("Priori de Jeffreys"),
 ## Preditiva a priori
 A distribuição preditiva a priori, Sob independência condicional é dada pela integral da verossimilhança (de uma única observação) multiplicada pela posteriori, conforme a fórmula abaixo:
 
-$f(y|D) =fY(y)π(θ)dμ$ (add o símbolo de integral)
+$f(y|D) = \int_{-∞}^{∞} fY(y)π(θ)dμ$
+Neste caso,
 
+$ Y~N(\mu,\sigma^2 ), f_y(y) =  \frac{1}{\sqrt2{\pi}\sigma^2}e^{-\frac{1}{2 \sigma^2}(y-\mu)^2}  $
+$ \theta~N(\mu_0,\sigma_0^2 ), \pi(\theta) =  \frac{1}{2{\pi}\sigma_0^2}e^{-\frac{1}{2 \sigma_0^2}(y-\mu_0)^2}  $
 
+$f(y|D = \int_{-∞}^{∞}fy(y)π(θ)dμ )$
+= $ \frac{1}{\sqrt2{\pi}\sigma^2}e^{-\frac{1}{2 \sigma^2}(y-\mu)^2} \frac{1}{\sqrt2{\pi}\sigma_0^2}e^{-\frac{1}{2 \sigma_0^2}(y-\mu_0)^2}d\mu$
 
+Lembrando-se que $\sigma^2$, e os hiperparâmetros $\mu_0$ e $ \sigma_0$ são constantes conhecidas, tem-se:
+$f(y|D = \int_{-∞}^{∞} e^{-\frac{1}{2 \sigma^2}(y-\mu)^2}e^{-\frac{1}{2 \sigma_0^2}(\mu-\mu_0)^2}d\mu$
+
+Fazendo A= $\frac{1}{\sigma^2}$, B= $\frac{1}{\sigma_0^2}$, a=y, b= $\mu_0$, tem-se:
+
+$f(y|D = \int_{-∞}^{∞} e^{- \frac{1}{2}[A(\mu-a)^2+B(\mu-b)^2]d\mu} $
 
 Lembrando-se que:
 
