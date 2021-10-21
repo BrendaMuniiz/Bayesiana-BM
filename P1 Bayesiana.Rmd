@@ -1,9 +1,9 @@
 ---
-title: "Bayesiana P1"
+title: "Prova 1 de Inferência Bayesiana"
 author:
   - Brenda da Silva Muniz 11811603
   - Mônica Amaral Novelli 11810453
-date: "Setembro 2021"
+date: "Outubro 2021"
 output: pdf_document
 ---
 
@@ -20,11 +20,27 @@ library(invgamma)
 
 Considera-se um conjunto histórico de dados de densidade do solo em uma região registrados por Henry Cavendish no século XVIII. Agora, supõe-se que, de experimentos e medições prévios, a priori para θ, densidade da terra, é considerada ser N(5,4; 0,01). O pesquisador registrou 23 medidas da densidade do solo. Para estes dados, temos a média de y = 5,48 e supõe-se aqui que a variância de seu erro de medida é conhecida e igual a 0,04.
 
-## Priori informativa
+```{r}
+# pacote de dados utilizado:
+
+# caso não esteja instalado, tirar do comentário
+# install.packages("mas3321", repos="http://R-Forge.R-project.org")
+
+library(mas3321)
+
+data(cavendish)
+
+dados<- cavendish[['earth_density']]
+
+```
+
+## _Priori_ informativa
 
 Conforme nos foi dado no enunciado, temos que a distribuição Priori informativa é dada por  N(5,4; 0,01) sendo $\theta \sim \mathcal{N}(y_0, \tau_0^2)$ com média $y_0$ e variância $\tau_0^2$
 
-## #gráfico da distribuição priori informativa
+### Gráfico da distribuição _priori_ informativa
+
+```{r}
 mu.0 <- 5.4
 dp.0 <- 0.1
 mu <- seq(4,7,0.01)
@@ -36,11 +52,11 @@ legend(4, 3.7,
        legend=c("Priori informativa"),
        col=c("#FF0080"),
        lty=1:2,pch=c(7,6),cex=0.6)
+```
 
+## _Priori_ não informativa de Jeffreys
 
-## Priori não informativa de Jeffreys
-
-Temos que distribuição não informativa de Jeffreys é dada por:
+Temos que distribuição a _priori_ não informativa de Jeffreys é dada por:
 
 $p(θ) ∝ [I(θ)]^{1/2}$
 
@@ -58,7 +74,6 @@ Temos que a função de densidade $f_X(x)$ é dada por:
 $f_X(x) = \frac{1}{√2πσ^2}\exp({-\frac{1}{2σ^2}(x − μ)})$
 
 E nossa função de distribuição conjunta $f_{X_1,X_2,...,X_n}(x_1, x_2, . . . , x_n)$
-
 
 $\prod_{i = 1}^{n} f_X(x_i) =  \prod_{i=1}^{n} \frac{1}{\sqrt{2\piσ^2}}\exp(-\frac{1}{{2σ^2}}(x_i − μ)^2 = (\frac{1}{\sqrt{2\piσ^2}})^{n/2}\exp(-\frac{1}{{2σ^2}}\sum_{i=1}^{n} (x_i − μ)^2)$
 
@@ -79,13 +94,14 @@ $ L(θ) = L(μ) ∝ \exp(-\frac{1}{2σ^2}\sum_{i=1}^{n}(x_i − μ)^2 ∝ \exp(�
 # informacao dos dados: dist. normal com variancia conhecida = sigma2
  n = 23
  xbarra = 5.48
- var(dados)
+ var(dados) # testando a variância
  var(dados)/n
  sigma2 = 0.04 # variancia conhecida
 ```
 
 ```{r}
- # funcao de verossimilhanca
+ # funcao de verossimilhança
+
  f.vero = function(mu, dados) prod(dnorm(dados,mu,sqrt(sigma2)))
  mu.seq = seq(0,10,0.01)
  vero = sapply(mu.seq,f.vero,dados = dados)
@@ -96,6 +112,7 @@ $ L(θ) = L(μ) ∝ \exp(-\frac{1}{2σ^2}\sum_{i=1}^{n}(x_i − μ)^2 ∝ \exp(�
 # grafico da funcao de verossimilhanca       
  plot(mu.seq,vero,  col = "blue", type= "l", xlab = expression(mu), ylab = "density")
 ```
+
 ```{r}
  # grafico da densidade da media dos dados
  plot(mu.seq,dnorm(mean(dados),mu.seq,sqrt(sigma2/n)), type="l",col = "green")
@@ -116,30 +133,30 @@ $ L(θ) = L(μ) ∝ \exp(-\frac{1}{2σ^2}\sum_{i=1}^{n}(x_i − μ)^2 ∝ \exp(�
 ```
 
 
-## Posteriori
+## Distribuição a _Posteriori_
 
-A distribuição a posteriori de θ dado x é $N(µ_1, {τ_1}^2)$ sendo
+A distribuição a _posteriori_ de θ dado x é $N(µ_1, {τ_1}^2)$ sendo:
 
 $µ1 = {\frac{{τ_0}^{−2}µ_0 + nσ^{−2}\overline{x}}{{τ_0}^{−2}+ nσ^{−2}}}$ e ${τ_1}^{−2} = {τ_0}^{-2} + nσ^{−2}.$
 
 
 
+## Resumo a _posteriori_ com a _priori_ informativa
 
-## Resumo a posteriori com a priori informativa
-
-Para uma única observação vimos a família de distribuições normais é conjugada ao modelo normal. Para uma amostra de tamanho n, a função de verossimilhança pode ser escrita como
+Para uma única observação vimos a família de distribuições normais é conjugada ao modelo normal. Para uma amostra de tamanho n, a função de verossimilhança pode ser escrita como:
 
 $ L(θ) = L(μ) ∝ \exp (−\frac{n}{2σ^2} (\overline{x} - \theta)^2}) $
 
-onde os termos que não dependem de θ foram incorporados á constante de proporcionalidade. Portanto, a verossimilhança tem a mesma forma daquela baseada em uma única observação bastando substituir x por ${\overline{X}}$ e $σ^2$ por $σ^2/n$
-Logo,  com as devidas substituições, i.e. a distribuição a posteriori de {/θ} dado x é
-onde:
- = $μ_0=\frac{\tau_0^{-2}\mu_0+nσ^{-2}{\overline{X}}}{\tau_0^{-2}+nσ^{-2}}$
+Onde os termos que não dependem de θ foram incorporados á constante de proporcionalidade. Portanto, a verossimilhança tem a mesma forma daquela baseada em uma única observação bastando substituir x por ${\overline{X}}$ e $σ^2$ por $σ^2/n$
+Logo,  com as devidas substituições, i.e. a distribuição a _posteriori_ de {/θ} dado x é:
+ 
+ $μ_0=\frac{\tau_0^{-2}\mu_0+nσ^{-2}{\overline{X}}}{\tau_0^{-2}+nσ^{-2}}$
 
  e $\tau_1^{-2}=\tau_0^{-2}+nσ^{-2}$
 
 Seguindo esta lógica,
-Se $ X_1,\dots,X_n$ é uma amostra aleatória da $ N(\theta,σ^2)$ com $ σ^2$ conhecido e usarmos a priori conjugada, i.e. $ \theta\sim N(\mu_0,\tau_0^2)$ então a posteriori também será normal e neste caso média, mediana e moda coincidem. Portanto, o estimador de Bayes de $ \theta$ é dado por:
+
+Se $ X_1,\dots,X_n$ é uma amostra aleatória da $ N(\theta,σ^2)$ com $ σ^2$ conhecido e usarmos a _priori_ conjugada, i.e. $ \theta\sim N(\mu_0,\tau_0^2)$ então a _posteriori_ também será normal e neste caso média, mediana e moda coincidem. Portanto, o estimador de Bayes de $ \theta$ é dado por:
 $$\displaystyle \delta(X)=\frac{\tau_0^{-2}\mu_0+nσ^{-2}{\overline{X}}}{\tau_0^{-2}+nσ^{-2}}$$
 
 ```{r}
@@ -159,7 +176,8 @@ tibble(      Priori = c("Priori"),
   knitr::kable(digits = 2           , caption = "Resumo aposteriori (n=23)")
 ```
 
-## Gráfico Posteriori com a priori informativa
+## Gráfico da distribuição a _Posteriori_ com a _priori_ informativa
+
 Logo, de acordo com as fórmulas acima apresentadas temos que:
 
 ```{r}
@@ -172,9 +190,9 @@ plot(mu,dnorm(mu,mu.post,dp.post),type="l",
      ylab=expression(pi(mu/y)))
 ```
 
-## Resumo a posteriori com a priori não informativa
+## Resumo a _posteriori_ com a _priori_ não informativa
 
-Temos que a média e a precisão da posteriori convergem para a média e a precisão amostrais. Com isso, a média, moda e mediana a posteriori coincidem então com a estimativa clássica de máxima verossimilhança, $ \overline{x}$.
+Temos que a média e a precisão da _posteriori_ convergem para a média e a precisão amostrais. Com isso, a média, moda e mediana a posteriori coincidem então com a estimativa clássica de máxima verossimilhança, $ \overline{x}$.
 
 O intervalo de confiança Bayesiano $100(1- \alpha) $% é dado por:
 
@@ -188,17 +206,19 @@ tibble(      Priori = c("Priori de Jeffreys"),
              Mediana.post = c(5.48),
              Moda.post=c(5.48),
              SD.pri = c(0.1),
-             SD.pos = n/sigma2^2,
+             SD.pos = n*sigma2^2,
              IC.025 = c(qnorm(0.025, mean = 5.48 , sd = 0.2)),
-             IC.975 = c(qnorm(0.975, mean = 5.48 , sd = n/sigma2^2)))%>%
+             IC.975 = c(qnorm(0.975, mean = 5.48 , sd = n*sigma2^2)))%>%
   knitr::kable(digits = 2           , caption = "Resumo aposteriori (n=23)")
 ```
 
 
-## Preditiva a priori
-A distribuição preditiva a priori, Sob independência condicional é dada pela integral da verossimilhança (de uma única observação) multiplicada pela posteriori, conforme a fórmula abaixo:
+## Preditiva a _priori_
+
+A distribuição preditiva a _priori_, sob independência condicional é dada pela integral da verossimilhança (de uma única observação) multiplicada pela _posteriori_, conforme a fórmula abaixo:
 
 $f(y|D) = \int_{-∞}^{∞} fY(y)π(θ)dμ$
+
 Neste caso,
 
 $ Y~N(\mu,\sigma^2 ), f_y(y) =  \frac{1}{\sqrt2{\pi}\sigma^2}e^{-\frac{1}{2 \sigma^2}(y-\mu)^2}  $
@@ -238,7 +258,7 @@ Como $ A = \frac{1}{\sigma^2}$, $B = \frac{1}{\sigma_0^2}$, $a = y$, $b = \mu_0$
 
 $\frac{A+B}{AB} = \frac{\frac{1}{\sigma^2} + \frac{1}{\sigma_0^2}}{\frac{1}{\sigma^2}\frac{1}{\sigma_0^2}}  = \sigma_0^2+\sigma^2, f (y |D) ∝ e^{-\frac{1}{2}\frac{1}{\sigma_0^2+ \sigma^2}(y-\mu_0)^2}$
 
-Comparando-se com o kernel da distribuição $N(\mu, \sigma^2)$ conclui-se que a distribuição preditiva a priori é dada por:
+Comparando-se com o kernel da distribuição $N(\mu, \sigma^2)$ conclui-se que a distribuição preditiva a _priori_ é dada por:
 
 $y |D ∼ N(\mu_0,\sigma_0^2 + \sigma^2)$
 
