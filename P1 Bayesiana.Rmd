@@ -134,7 +134,7 @@ $ L(θ) = L(μ) ∝ \exp (−\frac{n}{2σ^2} (\overline{x} - \theta)^2}) $
 onde os termos que não dependem de θ foram incorporados á constante de proporcionalidade. Portanto, a verossimilhança tem a mesma forma daquela baseada em uma única observação bastando substituir x por ${\overline{X}}$ e $σ^2$ por $σ^2/n$
 Logo,  com as devidas substituições, i.e. a distribuição a posteriori de {/θ} dado x é
 onde:
- = $\displaystyle \delta(X)=\frac{\tau_0^{-2}\mu_0+nσ^{-2}{\overline{X}}}{\tau_0^{-2}+nσ^{-2}}$
+ = $μ_0=\frac{\tau_0^{-2}\mu_0+nσ^{-2}{\overline{X}}}{\tau_0^{-2}+nσ^{-2}}$
 
  e $\tau_1^{-2}=\tau_0^{-2}+nσ^{-2}$
 
@@ -195,4 +195,41 @@ tibble(      Priori = c("Priori de Jeffreys"),
 ```
 
 
-## Preditiva
+## Preditiva a priori
+A distribuição preditiva a priori, Sob independência condicional é dada pela integral da verossimilhança (de uma única observação) multiplicada pela posteriori, conforme a fórmula abaixo:
+
+$f(y|D) =fY(y)π(θ)dμ$ (add o símbolo de integral)
+
+
+
+
+Lembrando-se que:
+
+$A(z-a)^2 + B(z-b)^2 = (A+B)(z-c)^2 + \frac{AB}{A+B}(a-b)^2 $
+
+em que: $c = \frac{1}{A+B}(Aa+Bb)$
+
+Tem-se,
+
+$f(y|D)∝\int_{-∞}^{∞}e^{-\frac{1}{2}[(A+B)(μ−c)^2+\frac{AB}{A+B}(a-b)^2]}d\mu$
+
+Portanto,
+
+$f(y|D)∝e^{-\frac{1}{2}\frac{1}{\frac{A+B}{AB}}(a-b)^2}\int_{-∞}^{∞}e^{-\frac{1}{2}\frac{1}{A+B}(μ−c)^2}d\mu$
+
+Em que:
+
+$e^{-\frac{1}{2}\frac{1}{A+B}(\mu−c)^2} =$ Kernel$N(c, A+B)$ e, desse modo:
+
+$\int_{-∞}^{∞}e^{-\frac{1}{2}\frac{1}{A+B}(\mu−c)^2}dμ = \sqrt{2\pi(A+B)}$
+
+Como $ A = \frac{1}{\sigma^2}$, $B = \frac{1}{\sigma_0^2}$, $a = y$, $b = \mu_0$:
+
+$\frac{A+B}{AB} = \frac{\frac{1}{\sigma^2} + \frac{1}{\sigma_0^2}}{\frac{1}{\sigma^2}\frac{1}{\sigma_0^2}}  = \sigma_0^2+\sigma^2, f (y |D) ∝ e^{-\frac{1}{2}\frac{1}{\sigma_0^2+ \sigma^2}(y-\mu_0)^2}$
+
+Comparando-se com o kernel da distribuição $N(\mu, \sigma^2)$ conclui-se que a distribuição preditiva a priori é dada por:
+
+$y |D ∼ N(\mu_0,\sigma_0^2 + \sigma^2)$
+
+Logo, substituindo na fórmula, temos que:
+$y|D∼N(5.4,0.01+0.04) = N(5.4,0.05)$
