@@ -1,0 +1,20 @@
+Este trabalho tem como objetivo ajustar um modelo de regressão linear múltipla a um conjunto de dados.
+
+## Conjunto de dados
+
+O dataset contém dados de um experimento para determinar **tempo**, **temperatura**, **percentual de solvatação**, **rendimento de óleo** e **carvão total** sob o **rendimento (y)**
+
+Significância: 97%
+
+
+```{r, echo=TRUE, warning=FALSE}
+dados <- read_csv("bla/data-table-B5.csv", locale = locale(decimal_mark = ","))
+dim(dados)
+dados
+```
+
+```{r}
+#Renomeando as colunas
+names(dados) <- c('y', 'Tempo', 'Temperatura', '% de solvatação', 'Rendimento Òleo', 'Carvão Total','x6','x7')
+head(dados)
+```
