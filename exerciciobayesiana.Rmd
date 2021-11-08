@@ -3,15 +3,13 @@ title: "Exercício proposto aula 28/10/2021"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+## R Markdown
+```{r}
+
+#install.packages('R2OpenBUGS')
 ```
 
-## R Markdown
-
 ```{r}
-install.packages('R2OpenBUGS')
-
 
 z <- c(rep(0,5),rep(1,5))
 
@@ -19,11 +17,44 @@ x <- c(seq(2,10,2),seq(4,12,2))
 
 y <- c(25,29,45,53,73,47,73,87,109,119)
 
+```
+
+```{r}
+
 dad <- data.frame(z=z,x=x,y=y)
 
 dad
 
-
-require(R2OpenBUGS)
 ```
 
+```{r}
+
+require(R2OpenBUGS)
+
+```
+
+```{r}
+
+modelo <- function(){
+# Definindo a distribuição dos dados
+for(i in 1:N){
+y[i] ~ dnorm(mu[i],tau)
+mu[i] <- beta0 + beta1*x[i]
+
+}
+
+# Modelagem da incerteza a priori
+  beta0 ~ dnorm(0.0,1.0E-6)
+beta1 ~ dnorm(0.0,1.0E-6)
+tau ~ dgamma(0.001,0.001)
+sigma2 <- 1 / tau
+}
+```
+
+```{r}
+# Criando um arquivo .txt ou .bug
+mod <- file.path(tempdir(), "mod.txt")
+# Inserindo o modelo no arquivo
+write.model(modelo,mod)
+file.show(mod)
+```
