@@ -3,7 +3,7 @@ title: "Exercício proposto aula 28/10/2021"
 output: pdf_document
 ---
 
-## R Markdown
+## R Markdownnn
 ```{r}
 
 #install.packages('R2OpenBUGS')
@@ -44,7 +44,7 @@ mu[i] <- beta0 + beta1*x[i]
 }
 
 # Modelagem da incerteza a priori
-  beta0 ~ dnorm(0.0,1.0E-6)
+beta0 ~ dnorm(0.0,1.0E-6)
 beta1 ~ dnorm(0.0,1.0E-6)
 tau ~ dgamma(0.001,0.001)
 sigma2 <- 1 / tau
@@ -57,4 +57,208 @@ mod <- file.path(tempdir(), "mod.txt")
 # Inserindo o modelo no arquivo
 write.model(modelo,mod)
 file.show(mod)
+```
+
+```{r}
+N <- length(x)
+data = list('N'= N, 'x'=x, 'y'=y)
+```
+
+```{r}
+params <- c('beta0', 'beta1', 'tau', 'sigma2')
+inits <- list(
+  list(beta0 =1, beta1=0.5, tau=1),
+  list(beta0=2, beta1=2,tau=10),
+  list(beta0=-1,beta1=2,tau=0.5))
+```
+
+#não está indo, n sei oq rmarkdown pg 3 do exemplo
+```{r}
+out <- bugs(data, inits, params, mod, codaPkg = TRUE,
+            n.chains = 3,
+            n.iter = 14000,n.thin=1,n.burnin=4000,debug=F)
+out.coda <- read.bugs(out)
+```
+
+```{r}
+require(mcmcplots)
+mcmcplot(out.coda)
+```
+#versão 3.6 bla
+```{r}
+require(mcmcplots)
+```
+```{r}
+op=par(mfrow=c(1,2))
+denplot(out.coda,parms = "beta0",collapse =T ,ci=0.95,mar=c(14, 5, 8,3),style="plain")
+par(new=T)
+caterplot(out.coda,parms = "beta0",collapse=T,
+val.lim = c(-7,17),col="red")
+```
+
+```{r}
+require(lattice)
+require(latticeExtra)
+```
+
+```{r}
+traceplot(out.coda)
+```
+
+```{r}
+densityplot(out.coda)
+```
+
+```{r}
+acfplot(out.coda,type="h")
+```
+
+```{r}
+chain.beta0 <- c(out.coda[[1]][,1],out.coda[[2]][,1],out.coda[[3]][,1])
+chain.beta1 <- c(out.coda[[1]][,2],out.coda[[2]][,2],out.coda[[3]][,2])
+cor(chain.beta0, chain.beta1)
+```
+
+```{r}
+cor(chain.beta0,chain.beta1)
+```
+
+```{r}
+gelman.diag(out.coda)
+```
+
+```{r}
+resumo <- summary(out.coda)
+names(resumo)
+```
+
+```{r}
+dim(resumo$statistics)
+```
+
+```{r}
+colnames(resumo$statistics)
+```
+
+```{r}
+resumo$statistics[,4]/resumo$statistics[,3]
+```
+
+```{r}
+resumo1 <- resumo
+```
+
+```{r}
+chain <- c(out.coda[[1]][,1],out.coda[[2]][,1],
+out.coda[[3]][,1])
+mean(chain)
+```
+
+```{r}
+var(x)
+```
+
+```{r}
+c <- 3 # número de cadeias
+M <- length(out.coda[[1]][,1]) # comprimento de cada cadeia
+(Naive.SE <- sqrt(var(x)/(c*M)))
+```
+
+```{r}
+modelo2<- function(){
+# Definindo a distribuição dos dados
+for(i in 1:N){
+y[i] ~ dnorm(mu[i],tau)
+mu[i] <- beta0 + beta1*(x[i]-xbar)
+}
+# Modelagem da incerteza a priori
+# utilizando uma priori vaga
+beta0 ~ dnorm(0.0,1.0E-6)
+beta1 ~ dnorm(0.0,1.0E-6)
+tau ~ dgamma(0.001,0.001)
+sigma2 <- 1 /tau
+beta00 <- beta0 - beta1*xbar
+}
+```
+
+```{r}
+# Criando um arquivo .txt ou .bug
+mod2 <- file.path(tempdir(), "mod2.txt")
+# Inserindo o modelo no arquivo
+write.model(modelo2,mod2)
+#file.show(mod2)
+```
+
+```{r}
+N <- length(x)
+data = list('N' = N, 'x'=x, 'y'=y,xbar=75.1)
+```
+
+```{r}
+params <- c('beta0', 'beta1','beta00', 'tau','sigma2')
+```
+
+```{r}
+inits <- list(
+list(beta0 = 1,beta1=0.5, tau=1),
+list(beta0 = 2,beta1=2, tau=10),
+list(beta0 =-1,beta1=2, tau=0.5))
+```
+
+```{r}
+out <- bugs(data, inits, params, mod2, codaPkg=TRUE,
+n.chains = 3,
+n.iter=14000,n.thin = 1,n.burnin = 4000,debug=F)
+out.coda <- read.bugs(out)
+```
+
+```{r}
+require(mcmcplots)
+mcmcplot(out.coda)
+```
+
+```{r}
+summary(out.coda)
+```
+
+```{r}
+require(lattice)
+require(latticeExtra)
+```
+
+```{r}
+traceplot(out.coda)
+```
+
+```{r}
+densityplot(out.coda)
+```
+
+```{r}
+acfplot(out.coda,type="h")
+```
+
+```{r}
+gelman.diag(out.coda)
+```
+
+```{r}
+summary(out.coda)
+```
+
+```{r}
+resumo <- summary(out.coda)
+names(resumo)
+```
+
+```{r}
+dim(resumo$statistics)
+```
+
+```{r}
+colnames(resumo$statistics)
+```
+
+```{r}
+resumo$statistics[,4]/resumo$statistics[,3]
 ```
