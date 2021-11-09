@@ -4,20 +4,37 @@ output: pdf_document
 ---
 
 ## R Markdownnn
-```{r}
-
-#install.packages('R2OpenBUGS')
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(R2OpenBUGS)
 ```
 
 ```{r}
+
+#z <- c(rep(0,5),rep(1,5))
+
+#x <- c(seq(2,10,2),seq(4,12,2))
+
+#y <- c(25,29,45,53,73,47,73,87,109,119)
+
+```
+
+
+```{r}
+
+# CÓDIGO DO CHICO 
 
 z <- c(rep(0,5),rep(1,5))
-
 x <- c(seq(2,10,2),seq(4,12,2))
-
 y <- c(25,29,45,53,73,47,73,87,109,119)
+dad <- data.frame(z=z,x=x,y=y)
 
+#valores para z = 0
+dad_0 <- dad %>% filter(z == 0)
+dad_1 <- dad %>% filter(z == 1)
 ```
+
 
 ```{r}
 
@@ -27,11 +44,7 @@ dad
 
 ```
 
-```{r}
 
-require(R2OpenBUGS)
-
-```
 
 ```{r}
 
@@ -51,6 +64,27 @@ sigma2 <- 1 / tau
 }
 ```
 
+
+```{r}
+
+#CÓDIGO DO CHICO 
+
+modelo <- function(){
+  #definindo a distribuição dos dados
+  for (i  in 1:N) {
+    y[i] ~ dnorm(mu[i], tau)
+    mu[i] <- beta0 + beta1*x[i]
+  }
+#modelagem da incerteza a priori
+#usando uma priori vaga
+  
+  beta0 ~ dnorm(0.0, 1.0E-6)
+  beta1 ~ dnorm(0.0, 1.0E-6)
+  tau ~ dgamma(0.001, 0.001)
+  sigma2 <- 1/tau #o OPENBUGS trabalha com a precisão, que é o inverso da variancia
+}
+```
+
 ```{r}
 # Criando um arquivo .txt ou .bug
 mod <- file.path(tempdir(), "mod.txt")
@@ -59,9 +93,46 @@ write.model(modelo,mod)
 file.show(mod)
 ```
 
+
+```{r}
+
+# CÓDIGO DO CHICO 
+
+mod0 <- file.path(tempdir(), "mod0.txt")
+write.model(modelo0, mod0)
+
+
+
+```
+
+
 ```{r}
 N <- length(x)
 data = list('N'= N, 'x'=x, 'y'=y)
+```
+
+
+```{r}
+
+# CÓDIGO DO CHICO 
+
+#Entrada dos dados
+#modelo para z = 0
+x <- dad_0$x
+y <- dad_0$y
+N <- length(x)
+data <- list('N' = N, 'x' = x, "y" = y)
+#atribuindo os valores iniciais para os nós estocásticos
+params <- c('beta0','beta1',"tau","sigma")
+inits <- list(
+  list(beta0 = 1, beta1 = 0.5, tau = 1),
+  list(beta0 = 2,beta1=2, tau=10),
+  list(beta0 =-1,beta1=2, tau=0.5))
+#obtendo as cadeias de markov
+out <- bugs(data, inits, params, modelo, codaPkg = TRUE,
+            n.chains = 3, n.iter = 14000, n.thin = 1,
+            n.burnin = 4000, debug = T)
+out.coda <- read.bugs(out)
 ```
 
 ```{r}
@@ -73,17 +144,24 @@ inits <- list(
 ```
 
 #não está indo, n sei oq rmarkdown pg 3 do exemplo
+
+```{r}
+#install.packages("mcmcplots")
+require(mcmcplots)
+
+rm(sd)
+```
+
+
 ```{r}
 out <- bugs(data, inits, params, mod, codaPkg = TRUE,
             n.chains = 3,
             n.iter = 14000,n.thin=1,n.burnin=4000,debug=F)
 out.coda <- read.bugs(out)
-```
 
-```{r}
-require(mcmcplots)
 mcmcplot(out.coda)
 ```
+
 #versão 3.6 bla
 ```{r}
 require(mcmcplots)
