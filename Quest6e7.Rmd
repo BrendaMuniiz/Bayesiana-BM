@@ -1,0 +1,58 @@
+---
+title: "Trabalho 2 - SME0820 - Grupo 2"
+subtitle: <h1>Energia solar no tecnológico de Georgia</h1>
+author:
+ - "Adriane Akemi Yamaguti - NUSP: 11915623"
+ - "Brenda da Silva Muniz  - NUSP: 11811603"
+ - "Mônica Amaral Novelli - NUSP: 11810453"
+date: "Atualizado em: `r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document:
+    pandoc_args: --listings
+    includes:
+      in_header: \lstset{
+  breaklines=true
+}
+fontsize: 30pt
+fig_caption: true
+number_sections: true
+lang: pt-br
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+<!-- Isso é um comentário -->
+
+\newpage
+<!-- Sumário -->
+\tableofcontents
+<!-- Índice das figuras-->
+\listoffigures
+<!-- Índice das tabelas -->
+\listoftables
+
+\newpage
+
+## Especificações do R
+Abaixo, temos as especificações do RStudio utilizado para o trabalho:
+```{r version}
+R.version
+```
+## Conjunto de dados
+
+```{r echo=FALSE}
+setwd("C:/Users/adria/OneDrive/Área de Trabalho/USP/4º Semestre/SME0824 - Gestão da Qualidade/Questionários")
+```
+
+
+```{r}
+dados = read.csv("dados_restaurantes (1).csv", sep = ",", header = T)
+dados
+``1. Importação das bibliotecas
+```{r files, results='hide'}
+# Carregando as bibliotecas
+library(tidyverse)
+library(janitor)
+library(cowplot)
