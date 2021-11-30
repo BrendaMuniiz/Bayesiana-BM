@@ -155,18 +155,54 @@ n_amostra <- 40
 ```
 
 
+## Construção do gráfico CUSUM tabular
 
+Abaixo, estamos definindo as variáveis que utilizaremos de parâmetros para a construção do gráfico. Na variável X, está concatenado de x1 a x5, enquanto nas variáveis n_amostra e amostra fazemos repetições para o número n de covariáveis (no caso, 5).
 
+```{r}
+X <- c(cbind(dados$x1, dados$x2, dados$x3, dados$x4, dados$x5))
 
+n_amostra <- rep(dados$n_amostra, 5)
 
+amostra <- c(rep(1,40), rep(2,40), rep(3,40), rep(4,40), rep(5,40))
+```
 
+Construindo um data frame:
 
+```{r}
 
+df <- data.frame(n_amostra=n_amostra, amostra = amostra, X = X)
 
+#View(df)
+```
 
+Podemos observar todas as observações realizando: 
 
+```{r}
 
+qcc(amostras, type='xbar')
+qcc(amostras, type='R')
 
+```
+
+# Gráfico X barra e R:
+
+```{r}
+
+XbarraeR <- ggplot(df, aes(x = n_amostra, y = X)) +
+  stat_summary(fun.y = "mean", color = "blue", geom = c("point")) +
+  stat_summary(fun.y = "mean", color = "blue", geom = c("line")) +
+  stat_QC(method = "xBar.rBar") + stat_QC(method = "rBar") 
+XbarraeR
+
+```
+
+Por fim, podemos construir o gráfico de controle para a soma cumulativa.
+
+```{r}
+df2 <- qcc.groups(X, n_amostra)
+cusum(df2, decision.interval = 3, se.shift = 1)
+```
 
 
 
