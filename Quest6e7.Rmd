@@ -65,6 +65,7 @@ options(tinytex.verbose = TRUE)
 
 \vspace{1.5 cm}
 
+\Large
 {\bf Questionário 6 e 7}
 
 \vspace{7 cm}
@@ -103,13 +104,15 @@ R.version
 # Conjunto de dados
 
 ```{r echo=FALSE}
-setwd("C:/Users/adria/OneDrive/Área de Trabalho/USP/4º Semestre/SME0824 - Gestão da Qualidade/Questionários")
+rm(list = ls())
+setwd("C:/Users/adria/OneDrive/Área de Trabalho/USP/4º Semestre/SME0824 - Gestão da Qualidade/Questionários/outras versões")
 ```
 ## Importação das bibliotecas
 ```{r files, results='hide'}
 # Carregando as bibliotecas
 library(tidyverse)
 library(qcc)
+library(ggQC)
 ```
 
 ## Leitura dos dados
@@ -123,39 +126,13 @@ knitr::kable(dados, "pipe",
              caption = "Tabela do tempo de entrega (em minutos)",
              digits = 2)
 ```
-
+O nosso dataset possui 40 linhas e 8 colunas. No entanto, estamos considerando que as 30 primeiras observações representam o tempo padrão de entrega dos pedidos do restaurantes. Já nas linhas restantes, o tempo de entrega com um funcionário a menos.
 ```{r}
 glimpse(dados)
 ```
+# Gráfico X barra e R:
 
-Vamos fazer os gráficos $\bar{X}$ e R utilizando o ggplot2:
-```{r}
-# Usando as 30 observações
-amostra_piloto <- dados[1:30,]
-
-LC.R <- mean(amostra_piloto$R) # R barra
-
-(LC.Xbarra <- mean(amostra_piloto$xbarra)) # (X barra) barra
-```
-
-```{r}
-# Limites de controle para X barra
-
-(LIC.Xbarra <- LC.Xbarra - 0.577 * LC.R)
-(LSC.Xbarra <- LC.Xbarra + 0.577 * LC.R)
-
-#Gráfico Xbarra para a amostra toda
-n_amostra <- 40
-(xbar <- ggplot(dados, aes(x=, y=Xbarra)) +
-    geom_point() + geom_line() +
-    geom_hline(aes(yintercept = LIC.Xbarra), linetype = "solid") +
-    geom_hline(aes(yintercept = LC.Xbarra), linetype = "dotdash") +
-    geom_hline(aes(yintercept = LSC.Xbarra), linetype = "solid") +
-    labs(x= "Amostras", y = "Médias das amostras", title="Gráfico X barra"))
-```
-
-
-## Construção do gráfico CUSUM tabular
+## Pacote QCC (Quality Control Charts):
 
 Abaixo, estamos definindo as variáveis que utilizaremos de parâmetros para a construção do gráfico. Na variável X, está concatenado de x1 a x5, enquanto nas variáveis n_amostra e amostra fazemos repetições para o número n de covariáveis (no caso, 5).
 
@@ -173,29 +150,75 @@ Construindo um data frame:
 
 df <- data.frame(n_amostra=n_amostra, amostra = amostra, X = X)
 
-#View(df)
 ```
 
 Podemos observar todas as observações realizando: 
 
 ```{r}
 
-qcc(amostras, type='xbar')
-qcc(amostras, type='R')
+qcc(dados, type='xbar', title= 'Gráfico X barra',
+    xlab= 'Amostras', ylab= "Médias das amostras")
+
+qcc(dados, type='R', title= 'Gráfico da Amplitude',
+    xlab= 'Amostras', ylab= "Amplitude das amostras")
 
 ```
 
-# Gráfico X barra e R:
+
+## Pacote ggplot2 (Create Elegant Data Visualisations Using the Grammar of Graphics):
+
+Resolvemos utilizar o ggplot2 para comparar com o QCC e verificar se houve alguma diferença significativa nos gráficos de controle.
 
 ```{r}
+# Usando as 30 observações
+amostra_piloto <- dados[1:30,]
+
+# Calculando os limites de controle
+LC.R <- mean(amostra_piloto$R) # R barra
+
+LC.xbarra <- mean(amostra_piloto$xbarra) # (X barra) barra
+```
+
+```{r}
+# Calculando o limite inferior e o limite superior de controle para X barra
+LIC.xbarra <- LC.xbarra - 0.577 * LC.R
+LSC.xbarra <- LC.xbarra + 0.577 * LC.R
+
+#Gráfico Xbarra para a amostra toda
+xbar <- ggplot(dados, aes(x=n_amostra, y= xbarra)) +
+    geom_point(aes(x=n_amostra, y= xbarra)) + geom_line() +
+    geom_hline(aes(yintercept = LIC.xbarra), linetype = "solid") +
+    geom_hline(aes(yintercept = LC.xbarra), linetype = "dotdash") +
+    geom_hline(aes(yintercept = LSC.xbarra), linetype = "solid") +
+    labs(x= "Amostras", y = "Médias das amostras", title="Gráfico X barra")
+
+# Gráfico de controle para R ou Gráfico da amplitude
+LIC.R <- 0 * LC.R
+
+LSC.R <- 2.114 * LC.R
+
+r <- ggplot(dados, aes(x=n_amostra, y=R)) +
+    geom_point() + geom_line() +
+    geom_hline(aes(yintercept = LIC.R), linetype = "solid") +
+    geom_hline(aes(yintercept = LC.R), linetype = "dotdash") +
+    geom_hline(aes(yintercept = LSC.R), linetype = "solid")+
+    labs(x= "Amostras", y = "Amplitude das amostras", title="Gráfico R")
+```
+
+Aqui, juntamos os dois gráficos de controle:
+
+```{r, warning=FALSE}
 
 XbarraeR <- ggplot(df, aes(x = n_amostra, y = X)) +
   stat_summary(fun.y = "mean", color = "blue", geom = c("point")) +
   stat_summary(fun.y = "mean", color = "blue", geom = c("line")) +
-  stat_QC(method = "xBar.rBar") + stat_QC(method = "rBar") 
-XbarraeR
+  stat_QC(method = "xBar.rBar") +
+  stat_QC(method = "rBar") 
 
+XbarraeR
 ```
+
+# Construção do gráfico CUSUM tabular
 
 Por fim, podemos construir o gráfico de controle para a soma cumulativa.
 
@@ -203,78 +226,6 @@ Por fim, podemos construir o gráfico de controle para a soma cumulativa.
 df2 <- qcc.groups(X, n_amostra)
 cusum(df2, decision.interval = 3, se.shift = 1)
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Usando o pacote qcc:
-```{r}
-amostras <- dados[,1:5]
-# Nome das amostra é a 1ª coluna de dados
-#row.names(amostras) <- dados[,1]
-
-# Usando amostras piloto
-grafx_bar <- qcc(amostras[1:30,], type = "xbar")
-grafx_bar
-
-grafR <- qcc(amostras[1:30,], type = "R")
-grafR
-
-```
-
-```{r}
-# Defindo os limites
-limites_xbar <- grafx_bar$limits
-limites_R <- grafR$limits
-
-# Todas as observações
-qcc(amostras, type = "xbar", limits = limites_xbar)
-qcc(amostras, type = "R", limits = limites_R)
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
