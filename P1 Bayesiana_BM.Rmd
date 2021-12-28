@@ -12,8 +12,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 ```{r pkg-load, message = FALSE}
 library(tidyverse)
-library(effectsize)
-library(invgamma)
 ```
 
 # Problema dado
@@ -200,7 +198,7 @@ $(\overline{x} - z_{\alpha/2} \sigma/\sqrt{n} ; \overline{x} + z_{\alpha/2} \sig
 
 Com isso, temos nosso resumo a posteriori de modo que:
 
-```{r tabdis5}
+```{r tabdis2}
 tibble(      Priori = c("Priori de Jeffreys"),
              Media.pos = c(5.48),
              Mediana.post = c(5.48),
@@ -264,5 +262,3 @@ $y |D ∼ N(\mu_0,\sigma_0^2 + \sigma^2)$
 
 Logo, substituindo na fórmula, temos que:
 $y|D∼N(5.4,0.01+0.04) = N(5.4,0.05)$
-
-tinytex::install_tinytex()

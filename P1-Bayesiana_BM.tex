@@ -1,0 +1,530 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Prova 1 de Inferência Bayesiana},
+  pdfauthor={Brenda da Silva Muniz 11811603; Mônica Amaral Novelli 11810453},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{Prova 1 de Inferência Bayesiana}
+\author{Brenda da Silva Muniz 11811603 \and Mônica Amaral Novelli
+11810453}
+\date{Outubro 2021}
+
+\begin{document}
+\maketitle
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(tidyverse)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{problema-dado}{%
+\section{Problema dado}\label{problema-dado}}
+
+Considera-se um conjunto histórico de dados de densidade do solo em uma
+região registrados por Henry Cavendish no século XVIII. Agora, supõe-se
+que, de experimentos e medições prévios, a priori para θ, densidade da
+terra, é considerada ser N(5,4; 0,01). O pesquisador registrou 23
+medidas da densidade do solo. Para estes dados, temos a média de y =
+5,48 e supõe-se aqui que a variância de seu erro de medida é conhecida e
+igual a 0,04.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# pacote de dados utilizado:}
+
+\CommentTok{\# caso não esteja instalado, tirar do comentário}
+\CommentTok{\# install.packages("mas3321", repos="http://R{-}Forge.R{-}project.org")}
+
+\FunctionTok{library}\NormalTok{(mas3321)}
+
+\FunctionTok{data}\NormalTok{(cavendish)}
+
+\NormalTok{dados}\OtherTok{\textless{}{-}}\NormalTok{ cavendish[[}\StringTok{\textquotesingle{}earth\_density\textquotesingle{}}\NormalTok{]]}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{priori-informativa}{%
+\subsection{\texorpdfstring{\emph{Priori}
+informativa}{Priori informativa}}\label{priori-informativa}}
+
+Conforme nos foi dado no enunciado, temos que a distribuição Priori
+informativa é dada por N(5,4; 0,01) sendo
+\(\theta \sim \mathcal{N}(y_0, \tau_0^2)\) com média \(y_0\) e variância
+\(\tau_0^2\)
+
+\hypertarget{gruxe1fico-da-distribuiuxe7uxe3o-priori-informativa}{%
+\subsubsection{\texorpdfstring{Gráfico da distribuição \emph{priori}
+informativa}{Gráfico da distribuição priori informativa}}\label{gruxe1fico-da-distribuiuxe7uxe3o-priori-informativa}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{mu}\FloatTok{.0} \OtherTok{\textless{}{-}} \FloatTok{5.4}
+\NormalTok{dp}\FloatTok{.0} \OtherTok{\textless{}{-}} \FloatTok{0.1}
+\NormalTok{mu }\OtherTok{\textless{}{-}} \FunctionTok{seq}\NormalTok{(}\DecValTok{4}\NormalTok{,}\DecValTok{7}\NormalTok{,}\FloatTok{0.01}\NormalTok{)}
+\FunctionTok{plot}\NormalTok{(mu,}\FunctionTok{dnorm}\NormalTok{(mu,mu}\FloatTok{.0}\NormalTok{,dp}\FloatTok{.0}\NormalTok{),}\AttributeTok{type=}\StringTok{"l"}\NormalTok{,}
+     \AttributeTok{col=}\StringTok{"\#FF0080"}\NormalTok{,}\AttributeTok{lty=}\DecValTok{1}\NormalTok{,}\AttributeTok{pch=}\DecValTok{18}\NormalTok{,   }
+     \AttributeTok{xlab=}\FunctionTok{expression}\NormalTok{(mu),}
+     \AttributeTok{ylab=}\FunctionTok{expression}\NormalTok{(}\FunctionTok{pi}\NormalTok{(mu)))}
+\FunctionTok{legend}\NormalTok{(}\DecValTok{4}\NormalTok{, }\FloatTok{3.7}\NormalTok{,}
+       \AttributeTok{legend=}\FunctionTok{c}\NormalTok{(}\StringTok{"Priori informativa"}\NormalTok{),}
+       \AttributeTok{col=}\FunctionTok{c}\NormalTok{(}\StringTok{"\#FF0080"}\NormalTok{),}
+       \AttributeTok{lty=}\DecValTok{1}\SpecialCharTok{:}\DecValTok{2}\NormalTok{,}\AttributeTok{pch=}\FunctionTok{c}\NormalTok{(}\DecValTok{7}\NormalTok{,}\DecValTok{6}\NormalTok{),}\AttributeTok{cex=}\FloatTok{0.6}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P1-Bayesiana_BM_files/figure-latex/unnamed-chunk-2-1.pdf}
+
+\hypertarget{priori-nuxe3o-informativa-de-jeffreys}{%
+\subsection{\texorpdfstring{\emph{Priori} não informativa de
+Jeffreys}{Priori não informativa de Jeffreys}}\label{priori-nuxe3o-informativa-de-jeffreys}}
+
+Temos que distribuição a \emph{priori} não informativa de Jeffreys é
+dada por:
+
+\(p(θ) ∝ [I(θ)]^{1/2}\)
+
+Em que \(I(\theta)\) é a medida de informação esperada de Fisher de θ
+através de X que é definida como:
+
+\(I(θ) = E[-\frac{∂^2log p(x|\theta)}{∂\theta^2}]\)
+
+\hypertarget{verossimilhanuxe7a}{%
+\subsection{Verossimilhança}\label{verossimilhanuxe7a}}
+
+Dados \(X_1, X_2, . . . , X_n\) amostra aleatória \(X ∼ N(μ, σ^2)\)
+
+Temos que a função de densidade \(f_X(x)\) é dada por:
+
+\(f_X(x) = \frac{1}{√2πσ^2}\exp({-\frac{1}{2σ^2}(x − μ)})\)
+
+E nossa função de distribuição conjunta
+\(f_{X_1,X_2,...,X_n}(x_1, x_2, . . . , x_n)\)
+
+\(\prod_{i = 1}^{n} f_X(x_i) = \prod_{i=1}^{n} \frac{1}{\sqrt{2\piσ^2}}\exp(-\frac{1}{{2σ^2}}(x_i − μ)^2 = (\frac{1}{\sqrt{2\piσ^2}})^{n/2}\exp(-\frac{1}{{2σ^2}}\sum_{i=1}^{n} (x_i − μ)^2)\)
+
+Temos que:
+
+\$\sum\emph{\{i=1\}\^{}\{n\}(x\_i − μ)\^{}2 = \sum}\{i=1\}\^{}\{n\}
+(x\_i -\overline{x} )\^{}2 + 2(\overline{x} - μ)
+\sum\emph{\{i=1\}\^{}\{n\}(x\_i -\overline{x} ) +
+\sum}\{i=1\}\^{}\{n\}(\overline{x} - μ)\^{}2 \$
+
+E, desprezando as constantes, ficamos com:
+
+\$ \sum\_\{i=1\}\^{}\{n\} (x\_i − μ)\^{}2 ∝ n(μ - \overline{x})\^{}2 \$
+
+Desse modo, para uma amostra de tamanho n, a função de verossimilhança
+pode ser escrita como:
+
+\$ L(θ) = L(μ) ∝ \exp(-\frac{1}{2σ^2}\sum\_\{i=1\}\^{}\{n\}(x\_i −
+μ)\^{}2 ∝ \exp(−\frac{n}{2σ^2}(μ − \overline{x})\^{}2) \$
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# informacao dos dados: dist. normal com variancia conhecida = sigma2}
+\NormalTok{ n }\OtherTok{=} \DecValTok{23}
+\NormalTok{ xbarra }\OtherTok{=} \FloatTok{5.48}
+ \FunctionTok{var}\NormalTok{(dados) }\CommentTok{\# testando a variância}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.03702609
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+ \FunctionTok{var}\NormalTok{(dados)}\SpecialCharTok{/}\NormalTok{n}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.00160983
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ sigma2 }\OtherTok{=} \FloatTok{0.04} \CommentTok{\# variancia conhecida}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+ \CommentTok{\# funcao de verossimilhança}
+
+\NormalTok{ f.vero }\OtherTok{=} \ControlFlowTok{function}\NormalTok{(mu, dados) }\FunctionTok{prod}\NormalTok{(}\FunctionTok{dnorm}\NormalTok{(dados,mu,}\FunctionTok{sqrt}\NormalTok{(sigma2)))}
+\NormalTok{ mu.seq }\OtherTok{=} \FunctionTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{10}\NormalTok{,}\FloatTok{0.01}\NormalTok{)}
+\NormalTok{ vero }\OtherTok{=} \FunctionTok{sapply}\NormalTok{(mu.seq,f.vero,}\AttributeTok{dados =}\NormalTok{ dados)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# grafico da funcao de verossimilhanca       }
+ \FunctionTok{plot}\NormalTok{(mu.seq,vero,  }\AttributeTok{col =} \StringTok{"blue"}\NormalTok{, }\AttributeTok{type=} \StringTok{"l"}\NormalTok{, }\AttributeTok{xlab =} \FunctionTok{expression}\NormalTok{(mu), }\AttributeTok{ylab =} \StringTok{"density"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P1-Bayesiana_BM_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+ \CommentTok{\# grafico da densidade da media dos dados}
+ \FunctionTok{plot}\NormalTok{(mu.seq,}\FunctionTok{dnorm}\NormalTok{(}\FunctionTok{mean}\NormalTok{(dados),mu.seq,}\FunctionTok{sqrt}\NormalTok{(sigma2}\SpecialCharTok{/}\NormalTok{n)), }\AttributeTok{type=}\StringTok{"l"}\NormalTok{,}\AttributeTok{col =} \StringTok{"green"}\NormalTok{)}
+
+\CommentTok{\# informacao a priori}
+\NormalTok{ nu }\OtherTok{=} \DecValTok{10}
+\NormalTok{ tau2 }\OtherTok{=} \DecValTok{1}
+ \FunctionTok{lines}\NormalTok{(}\FunctionTok{density}\NormalTok{(}\FunctionTok{rnorm}\NormalTok{(}\DecValTok{1000}\NormalTok{,nu,}\FunctionTok{sqrt}\NormalTok{(tau2))))}
+
+  \CommentTok{\# informacao a posteriori}
+\NormalTok{ (}\AttributeTok{media\_posteriori =}\NormalTok{ (n }\SpecialCharTok{*}\NormalTok{ xbarra }\SpecialCharTok{*}\NormalTok{ tau2 }\SpecialCharTok{+}\NormalTok{ nu }\SpecialCharTok{*}\NormalTok{ sigma2) }\SpecialCharTok{/}\NormalTok{ (n }\SpecialCharTok{*}\NormalTok{ tau2 }\SpecialCharTok{+}\NormalTok{ sigma2))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 5.487847
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ (}\AttributeTok{var\_posteriori =}\NormalTok{ sigma2 }\SpecialCharTok{*}\NormalTok{ tau2 }\SpecialCharTok{/}\NormalTok{ (n }\SpecialCharTok{*}\NormalTok{ tau2 }\SpecialCharTok{+}\NormalTok{ sigma2))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.001736111
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+ \FunctionTok{lines}\NormalTok{(}\FunctionTok{density}\NormalTok{(}\FunctionTok{rnorm}\NormalTok{(}\DecValTok{1000}\NormalTok{,media\_posteriori,}\FunctionTok{sqrt}\NormalTok{(var\_posteriori))), }\AttributeTok{col =} \StringTok{"red"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P1-Bayesiana_BM_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+\hypertarget{distribuiuxe7uxe3o-a-posteriori}{%
+\subsection{\texorpdfstring{Distribuição a
+\emph{Posteriori}}{Distribuição a Posteriori}}\label{distribuiuxe7uxe3o-a-posteriori}}
+
+A distribuição a \emph{posteriori} de θ dado x é \(N(µ_1, {τ_1}^2)\)
+sendo:
+
+\(µ1 = {\frac{{τ_0}^{−2}µ_0 + nσ^{−2}\overline{x}}{{τ_0}^{−2}+ nσ^{−2}}}\)
+e \({τ_1}^{−2} = {τ_0}^{-2} + nσ^{−2}.\)
+
+\hypertarget{resumo-a-posteriori-com-a-priori-informativa}{%
+\subsection{\texorpdfstring{Resumo a \emph{posteriori} com a
+\emph{priori}
+informativa}{Resumo a posteriori com a priori informativa}}\label{resumo-a-posteriori-com-a-priori-informativa}}
+
+Para uma única observação vimos a família de distribuições normais é
+conjugada ao modelo normal. Para uma amostra de tamanho n, a função de
+verossimilhança pode ser escrita como:
+
+\$ L(θ) = L(μ) ∝ \exp (−\frac{n}{2σ^2} (\overline{x} - \theta)\^{}2\})
+\$
+
+Onde os termos que não dependem de θ foram incorporados á constante de
+proporcionalidade. Portanto, a verossimilhança tem a mesma forma daquela
+baseada em uma única observação bastando substituir x por
+\({\overline{X}}\) e \(σ^2\) por \(σ^2/n\) Logo, com as devidas
+substituições, i.e.~a distribuição a \emph{posteriori} de \{/θ\} dado x
+é:
+
+\(μ_0=\frac{\tau_0^{-2}\mu_0+nσ^{-2}{\overline{X}}}{\tau_0^{-2}+nσ^{-2}}\)
+
+e \(\tau_1^{-2}=\tau_0^{-2}+nσ^{-2}\)
+
+Seguindo esta lógica,
+
+Se \$ X\_1,\dots,X\_n\$ é uma amostra aleatória da \$ N(\theta,σ\^{}2)\$
+com \$ σ\^{}2\$ conhecido e usarmos a \emph{priori} conjugada, i.e.~\$
+\theta\sim N(\mu\_0,\tau\_0\^{}2)\$ então a \emph{posteriori} também
+será normal e neste caso média, mediana e moda coincidem. Portanto, o
+estimador de Bayes de \$ \theta\$ é dado por:
+\[\displaystyle \delta(X)=\frac{\tau_0^{-2}\mu_0+nσ^{-2}{\overline{X}}}{\tau_0^{-2}+nσ^{-2}}\]
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{estimador\_de\_bayes }\OtherTok{=}\NormalTok{ ((}\DecValTok{1}\SpecialCharTok{/}\FloatTok{0.01}\NormalTok{)}\SpecialCharTok{*}\FloatTok{5.4}\SpecialCharTok{+}\DecValTok{23}\SpecialCharTok{*}\NormalTok{((}\DecValTok{1}\SpecialCharTok{/}\NormalTok{(}\FloatTok{0.04}\SpecialCharTok{*}\DecValTok{2}\NormalTok{))}\SpecialCharTok{*}\FloatTok{5.48}\NormalTok{))}\SpecialCharTok{/}\NormalTok{((}\DecValTok{1}\SpecialCharTok{/}\FloatTok{0.01}\NormalTok{)}\SpecialCharTok{+}\DecValTok{23}\SpecialCharTok{*}\NormalTok{(}\DecValTok{1}\SpecialCharTok{/}\NormalTok{(}\FloatTok{0.04}\SpecialCharTok{*}\DecValTok{2}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{tibble}\NormalTok{(      }\AttributeTok{Priori =} \FunctionTok{c}\NormalTok{(}\StringTok{"Priori"}\NormalTok{),}
+             \AttributeTok{Media.pri =} \FunctionTok{c}\NormalTok{(}\FloatTok{5.4}\NormalTok{),}
+             \AttributeTok{Media.pos =} \FunctionTok{c}\NormalTok{(}\FloatTok{5.46}\NormalTok{),}
+             \AttributeTok{Mediana.post =} \FunctionTok{c}\NormalTok{(}\FloatTok{5.46}\NormalTok{),}
+             \AttributeTok{Moda.post=}\FunctionTok{c}\NormalTok{(}\FloatTok{5.46}\NormalTok{),}
+             \AttributeTok{SD.pri =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.1}\NormalTok{),}
+             \AttributeTok{SD.pos =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.2}\NormalTok{),}
+             \AttributeTok{IC.025 =} \FunctionTok{c}\NormalTok{(}\FunctionTok{qnorm}\NormalTok{(}\FloatTok{0.025}\NormalTok{, }\AttributeTok{mean =} \FloatTok{5.46}\NormalTok{ , }\AttributeTok{sd =} \FloatTok{0.2}\NormalTok{)),}
+             \AttributeTok{IC.975 =} \FunctionTok{c}\NormalTok{(}\FunctionTok{qnorm}\NormalTok{(}\FloatTok{0.975}\NormalTok{, }\AttributeTok{mean =} \FloatTok{5.46}\NormalTok{ , }\AttributeTok{sd =} \FloatTok{0.2}\NormalTok{)))}\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(}\AttributeTok{digits =} \DecValTok{2}\NormalTok{           , }\AttributeTok{caption =} \StringTok{"Resumo aposteriori (n=23)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrrrrrr@{}}
+\caption{Resumo aposteriori (n=23)}\tabularnewline
+\toprule
+Priori & Media.pri & Media.pos & Mediana.post & Moda.post & SD.pri &
+SD.pos & IC.025 & IC.975 \\
+\midrule
+\endfirsthead
+\toprule
+Priori & Media.pri & Media.pos & Mediana.post & Moda.post & SD.pri &
+SD.pos & IC.025 & IC.975 \\
+\midrule
+\endhead
+Priori & 5.4 & 5.46 & 5.46 & 5.46 & 0.1 & 0.2 & 5.07 & 5.85 \\
+\bottomrule
+\end{longtable}
+
+\hypertarget{gruxe1fico-da-distribuiuxe7uxe3o-a-posteriori-com-a-priori-informativa}{%
+\subsection{\texorpdfstring{Gráfico da distribuição a \emph{Posteriori}
+com a \emph{priori}
+informativa}{Gráfico da distribuição a Posteriori com a priori informativa}}\label{gruxe1fico-da-distribuiuxe7uxe3o-a-posteriori-com-a-priori-informativa}}
+
+Logo, de acordo com as fórmulas acima apresentadas temos que:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{mu.post }\OtherTok{\textless{}{-}} \FloatTok{5.46}
+\NormalTok{dp.post }\OtherTok{\textless{}{-}} \FloatTok{0.00303}
+
+\FunctionTok{plot}\NormalTok{(mu,}\FunctionTok{dnorm}\NormalTok{(mu,mu.post,dp.post),}\AttributeTok{type=}\StringTok{"l"}\NormalTok{,}
+     \AttributeTok{col=}\StringTok{"\#00FFFF"}\NormalTok{,}\AttributeTok{lty=}\DecValTok{1}\NormalTok{,}\AttributeTok{pch=}\DecValTok{18}\NormalTok{,   }
+     \AttributeTok{xlab=}\FunctionTok{expression}\NormalTok{(mu),}
+     \AttributeTok{ylab=}\FunctionTok{expression}\NormalTok{(}\FunctionTok{pi}\NormalTok{(mu}\SpecialCharTok{/}\NormalTok{y)))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P1-Bayesiana_BM_files/figure-latex/unnamed-chunk-9-1.pdf}
+
+\hypertarget{resumo-a-posteriori-com-a-priori-nuxe3o-informativa}{%
+\subsection{\texorpdfstring{Resumo a \emph{posteriori} com a
+\emph{priori} não
+informativa}{Resumo a posteriori com a priori não informativa}}\label{resumo-a-posteriori-com-a-priori-nuxe3o-informativa}}
+
+Temos que a média e a precisão da \emph{posteriori} convergem para a
+média e a precisão amostrais. Com isso, a média, moda e mediana a
+posteriori coincidem então com a estimativa clássica de máxima
+verossimilhança, \$ \overline{x}\$.
+
+O intervalo de confiança Bayesiano \$100(1- \alpha) \$\% é dado por:
+
+\((\overline{x} - z_{\alpha/2} \sigma/\sqrt{n} ; \overline{x} + z_{\alpha/2} \sigma/\sqrt{n})\)
+
+Com isso, temos nosso resumo a posteriori de modo que:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{tibble}\NormalTok{(      }\AttributeTok{Priori =} \FunctionTok{c}\NormalTok{(}\StringTok{"Priori de Jeffreys"}\NormalTok{),}
+             \AttributeTok{Media.pos =} \FunctionTok{c}\NormalTok{(}\FloatTok{5.48}\NormalTok{),}
+             \AttributeTok{Mediana.post =} \FunctionTok{c}\NormalTok{(}\FloatTok{5.48}\NormalTok{),}
+             \AttributeTok{Moda.post=}\FunctionTok{c}\NormalTok{(}\FloatTok{5.48}\NormalTok{),}
+             \AttributeTok{SD.pri =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.1}\NormalTok{),}
+             \AttributeTok{SD.pos =}\NormalTok{ n}\SpecialCharTok{*}\NormalTok{sigma2}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{,}
+             \AttributeTok{IC.025 =} \FunctionTok{c}\NormalTok{(}\FunctionTok{qnorm}\NormalTok{(}\FloatTok{0.025}\NormalTok{, }\AttributeTok{mean =} \FloatTok{5.48}\NormalTok{ , }\AttributeTok{sd =} \FloatTok{0.2}\NormalTok{)),}
+             \AttributeTok{IC.975 =} \FunctionTok{c}\NormalTok{(}\FunctionTok{qnorm}\NormalTok{(}\FloatTok{0.975}\NormalTok{, }\AttributeTok{mean =} \FloatTok{5.48}\NormalTok{ , }\AttributeTok{sd =}\NormalTok{ n}\SpecialCharTok{*}\NormalTok{sigma2}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)))}\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(}\AttributeTok{digits =} \DecValTok{2}\NormalTok{           , }\AttributeTok{caption =} \StringTok{"Resumo aposteriori (n=23)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrrrrr@{}}
+\caption{Resumo aposteriori (n=23)}\tabularnewline
+\toprule
+Priori & Media.pos & Mediana.post & Moda.post & SD.pri & SD.pos & IC.025
+& IC.975 \\
+\midrule
+\endfirsthead
+\toprule
+Priori & Media.pos & Mediana.post & Moda.post & SD.pri & SD.pos & IC.025
+& IC.975 \\
+\midrule
+\endhead
+Priori de Jeffreys & 5.48 & 5.48 & 5.48 & 0.1 & 0.04 & 5.09 & 5.55 \\
+\bottomrule
+\end{longtable}
+
+\hypertarget{preditiva-a-priori}{%
+\subsection{\texorpdfstring{Preditiva a
+\emph{priori}}{Preditiva a priori}}\label{preditiva-a-priori}}
+
+A distribuição preditiva a \emph{priori}, sob independência condicional
+é dada pela integral da verossimilhança (de uma única observação)
+multiplicada pela \emph{posteriori}, conforme a fórmula abaixo:
+
+\(f(y|D) = \int_{-∞}^{∞} fY(y)π(θ)dμ\)
+
+Neste caso,
+
+\$ Y\textasciitilde N(\mu,\sigma\^{}2 ), f\_y(y) =
+\frac{1}{\sqrt2{\pi}\sigma^2}e\textsuperscript{\{-\frac{1}{2 \sigma^2}(y-\mu)}2\}
+\$ \$ \theta\textasciitilde N(\mu\_0,\sigma\_0\^{}2 ), \pi(\theta) =
+\frac{1}{2{\pi}\sigma_0^2}e\^{}\{-\frac{1}{2 \sigma_0^2}(y-\mu\_0)\^{}2\}
+\$
+
+\(f(y|D = \int_{-∞}^{∞}fy(y)π(θ)dμ )\) = \$
+\frac{1}{\sqrt2{\pi}\sigma^2}e\textsuperscript{\{-\frac{1}{2 \sigma^2}(y-\mu)}2\}
+\frac{1}{\sqrt2{\pi}\sigma_0^2}e\^{}\{-\frac{1}{2 \sigma_0^2}(y-\mu\_0)\^{}2\}d\mu\$
+
+Lembrando-se que \(\sigma^2\), e os hiperparâmetros \(\mu_0\) e \$
+\sigma\_0\$ são constantes conhecidas, tem-se:
+\(f(y|D = \int_{-∞}^{∞} e^{-\frac{1}{2 \sigma^2}(y-\mu)^2}e^{-\frac{1}{2 \sigma_0^2}(\mu-\mu_0)^2}d\mu\)
+
+Fazendo A= \(\frac{1}{\sigma^2}\), B= \(\frac{1}{\sigma_0^2}\), a=y, b=
+\(\mu_0\), tem-se:
+
+\$f(y\textbar D = \int\_\{-∞\}\^{}\{∞\} e\^{}\{-
+\frac{1}{2}{[}A(\mu-a)\textsuperscript{2+B(\mu-b)}2{]}d\mu\} \$
+
+Lembrando-se que:
+
+\$A(z-a)\^{}2 + B(z-b)\^{}2 = (A+B)(z-c)\^{}2 + \frac{AB}{A+B}(a-b)\^{}2
+\$
+
+em que: \(c = \frac{1}{A+B}(Aa+Bb)\)
+
+Tem-se,
+
+\(f(y|D)∝\int_{-∞}^{∞}e^{-\frac{1}{2}[(A+B)(μ−c)^2+\frac{AB}{A+B}(a-b)^2]}d\mu\)
+
+Portanto,
+
+\(f(y|D)∝e^{-\frac{1}{2}\frac{1}{\frac{A+B}{AB}}(a-b)^2}\int_{-∞}^{∞}e^{-\frac{1}{2}\frac{1}{A+B}(μ−c)^2}d\mu\)
+
+Em que:
+
+\(e^{-\frac{1}{2}\frac{1}{A+B}(\mu−c)^2} =\) Kernel\(N(c, A+B)\) e,
+desse modo:
+
+\(\int_{-∞}^{∞}e^{-\frac{1}{2}\frac{1}{A+B}(\mu−c)^2}dμ = \sqrt{2\pi(A+B)}\)
+
+Como \$ A = \frac{1}{\sigma^2}\$, \(B = \frac{1}{\sigma_0^2}\),
+\(a = y\), \(b = \mu_0\):
+
+\(\frac{A+B}{AB} = \frac{\frac{1}{\sigma^2} + \frac{1}{\sigma_0^2}}{\frac{1}{\sigma^2}\frac{1}{\sigma_0^2}} = \sigma_0^2+\sigma^2, f (y |D) ∝ e^{-\frac{1}{2}\frac{1}{\sigma_0^2+ \sigma^2}(y-\mu_0)^2}\)
+
+Comparando-se com o kernel da distribuição \(N(\mu, \sigma^2)\)
+conclui-se que a distribuição preditiva a \emph{priori} é dada por:
+
+\(y |D ∼ N(\mu_0,\sigma_0^2 + \sigma^2)\)
+
+Logo, substituindo na fórmula, temos que:
+\(y|D∼N(5.4,0.01+0.04) = N(5.4,0.05)\)
+
+\end{document}
