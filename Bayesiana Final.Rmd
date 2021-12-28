@@ -9,20 +9,109 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r}
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+library(tidyverse)    # ggplot, dplyr, %>%, and friends
+library(gapminder)    # Country-year panel data from the Gapminder Project
+library(brms)         # Bayesian modeling through Stan
+library(tidybayes)    # Manipulate Stan objects in a tidy way
+library(broom)        # Convert model objects to data frames
+library(broom.mixed)  # Convert brms model objects to data frames
+library(emmeans)      # Calculate marginal effects in even fancier ways
+library(ggh4x)        # For nested facets in ggplot
+library(ggrepel)      # For nice non-overlapping labels in ggplot
+library(ggdist)       # For distribution-related ggplot geoms
+library(scales)       # For formatting numbers with comma(), dollar(), etc.
+library(patchwork)    # For combining plots
+library(ggokabeito)   # Colorblind-friendly color palette
 
-```{r cars}
-summary(cars)
+# Make all the random draws reproducible
+set.seed(1234)
+
+# Bayes stuff
+# Use the cmdstanr backend for Stan because it's faster and more modern than
+# the default rstan. You need to install the cmdstanr package first
+# (https://mc-stan.org/cmdstanr/) and then run cmdstanr::install_cmdstan() to
+# install cmdstan on your computer.
+options(mc.cores = 4,  # Use 4 cores
+        brms.backend = "cmdstanr")
+bayes_seed <- 1234
+
+# Custom ggplot theme to make pretty plots
+# Get Barlow Semi Condensed at https://fonts.google.com/specimen/Barlow+Semi+Condensed
+theme_clean <- function() {
+  theme_minimal(base_family = "Barlow Semi Condensed") +
+    theme(panel.grid.minor = element_blank(),
+          plot.background = element_rect(fill = "white", color = NA),
+          plot.title = element_text(face = "bold"),
+          axis.title = element_text(face = "bold"),
+          strip.text = element_text(face = "bold", size = rel(0.8), hjust = 0),
+          strip.background = element_rect(fill = "grey80", color = NA),
+          legend.title = element_text(face = "bold"))
+}
+
+# Make labels use Barlow by default
+update_geom_defaults("label_repel", 
+                     list(family = "Barlow Semi Condensed",
+                          fontface = "bold"))
+update_geom_defaults("label", 
+                     list(family = "Barlow Semi Condensed",
+                          fontface = "bold"))
+
+# The ggh4x paackage includes a `facet_nested()` function for nesting facets
+# (like countries in continents). Throughout this post, I want the
+# continent-level facets to use bolder text and a lighter gray strip. I don't
+# want to keep repeating all these settings, though, so I create a list of the
+# settings here with `strip_nested()` and feed it to `facet_nested_wrap()` later
+nested_settings <- strip_nested(
+  text_x = list(element_text(family = "Barlow Semi Condensed Black", 
+                             face = "plain"), NULL),
+  background_x = list(element_rect(fill = "grey92"), NULL),
+  by_layer_x = TRUE)
 ```
 
-## Including Plots
+```{r}
+# Little dataset of 8 countries (2 for each of the 4 continents in the data)
+# that are good examples of different trends and intercepts
+countries <- tribble(
+  ~country,       ~continent,
+  "Egypt",        "Africa",
+  "Sierra Leone", "Africa",
+  "Pakistan",     "Asia",
+  "Yemen, Rep.",  "Asia",
+  "Bolivia",      "Americas",
+  "Canada",       "Americas",
+  "Italy",        "Europe",
+  "Portugal",     "Europe"
+)
 
-You can also embed plots, for example:
+# Clean up the gapminder data a little
+gapminder <- gapminder::gapminder %>%
+  # Remove Oceania since there are only two countries there and we want bigger
+  # continent clusters
+  filter(continent != "Oceania") %>%
+  # Scale down GDP per capita so it's more interpretable ("a $1,000 increase in
+  # GDP" vs. "a $1 increase in GDP")
+  # Also log it
+  mutate(gdpPercap_1000 = gdpPercap / 1000,
+         gdpPercap_log = log(gdpPercap)) %>% 
+  mutate(across(starts_with("gdp"), list("z" = ~scale(.)))) %>% 
+  # Make year centered on 1952 (so we're counting the years since 1952). This
+  # (1) helps with interpretability, since the intercept will show the average
+  # at 1952 instead of the average at 0 CE, and (2) helps with estimation speed
+  # since brms/Stan likes to work with small numbers
+  mutate(year_orig = year,
+         year = year - 1952) %>% 
+  # Indicator for the 8 countries we're focusing on
+  mutate(highlight = country %in% countries$country)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+# Extract rows for the example countries
+original_points <- gapminder %>% 
+  filter(country %in% countries$country) %>% 
+  # Use real years
+  mutate(year = year_orig)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+glimpse(gapminder)
+```
