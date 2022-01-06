@@ -1,13 +1,22 @@
 ---
-title: "Bayesiana Trab 2"
-output: html_document
+title: "Prova 2 - Inferência Bayesiana"
+author:
+  - Brenda da Silva Muniz 11811603
+  - Mônica Amaral Novelli 11810453
+date: "Janeiro 2022"
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+
+# Introdução 
+
+  O propósito principal do nosso trabalho é explorar a relação entre riqueza e saúde - ou, em outros termos, PIB per capita e expectativa de vida a partir de um banco de dados retirado da biblioteca *gapminder*. Nossa hipótese inicial é de que a expectativa de vida aumenta conforme a riqueza aumenta, mas isso difere dependendo do país analisado.  Para isso, utilizaremos a abordagem bayesiana em modelos multiníveis relativos a dados de países por anos. Na metodologia (item 1) referenciaremos os motivos para a escolha desse, tal qual uma comparação com outros tipos de modelos.
+  
+Abaixo, seguem todas as predefinições utilizadas para a montagem do código:
 
 ```{r}
 
@@ -24,7 +33,9 @@ library(ggdist)       # For distribution-related ggplot geoms
 library(scales)       # For formatting numbers with comma(), dollar(), etc.
 library(patchwork)    # For combining plots
 library(ggokabeito)   # Colorblind-friendly color palette
+```
 
+```{r}
 # Make all the random draws reproducible
 set.seed(1234)
 
@@ -115,7 +126,11 @@ original_points <- gapminder %>%
 ```{r}
 glimpse(gapminder)
 ```
-The effect of wealth on health, accounting for country and time
+
+# Descrição e análise dos dados
+
+  Podemos fazer uma breve análise descritiva dos nossos dados para melhor visualização das trajetórias ao longo do tempo de cada país. 
+
 ```{r}
 ggplot(gapminder, aes(x = gdpPercap, y = lifeExp, color = continent)) + 
   geom_point(size = 0.5, alpha = 0.25) +
@@ -139,6 +154,48 @@ ggplot(gapminder, aes(x = gdpPercap, y = lifeExp, color = continent)) +
   theme(legend.position = "bottom")
 ```
 
+  Há alguns países com trajetórias mais estáveis, próximas a um aumento linear, como é o caso da Itália e de Portugal, por exemplo. Porém, também é possível notar países cujo aumentos da expectativa de vida ocorrem de forma brusca e acentuada - como é o caso da Bolívia. 
+  Podemos por fim reparar no posicionamento da trajetória de cada país, que nos informa sobre o PIB per capita médio de cada continente. O continente europeu apresenta ambos de seus representantes no quadrante superior do gráfico, significando que a renda média desse país conta com valores altos - atingindo em seu máximo mais de 30 mil dólares, e tendo seu valor inicial próximo a 3 mil dólares. Entretanto, os continentes asiático e africano contam com todas suas trajetórias praticamente no quadrante inferior do gráfico, atingindo seu valor inicial antes da faixa dos mil dólares. 
+  A linha cinza representada no gráfico ilustra a tendência global média, que indica que há uma correlação clara entre riqueza e saúde. Mas assim como descrito anteriormente, isso não pode ser generalizado para todos os países. Isso porque a inclinação de cada trajetória é particular e conta com aspectos além dos analisados: como visto, temos exemplos com a inclinação relativamente constante (Itália e Canadá), exemplos com inclinação íngremes (Bolívia) e ainda, trajetórias que não apresentam padrões claros, tendo pontos se que revertem (Serra Leoa). Desse modo, é importante que não tentemos analisar essa relação baseando-se apenas em um valor, e sim explorarmos como calcular e visualizar esses diferentes efeitos globais e específicos de cada país. O modo em que faremos isso será explorado no item 2 da Metodologia. 
+
+# Metodologia
+
+## Item 1:
+### Como foi feita a escolha do modelo:
+  Modelos multiníveis são modelos de regressão que incorporam efeitos específicos de grupo. Os grupos podem representar diferentes níveis de hierarquia. Presume-se que os efeitos específicos do grupo variam aleatoriamente de acordo com alguma distribuição a priori, geralmente uma distribuição normal. Essa suposição torna os modelos multiníveis candidatos naturais para uma análise bayesiana. Destaca-se, que os modelos multiníveis bayesianos assumem que outros parâmetros do modelo, tais como coeficientes de regressão e componentes de variância - variâncias de efeitos específicos de grupo - também são aleatórios.
+  Vale ressaltar ainda, que quando o interesse principal de um problema está voltado para comparação de grupos, a modelagem multinível bayesiana pode fornecer distribuições inteiras de efeitos específicos de grupo.
+Agora que já entendemos o funcionamento da modelagem multinível, vamos simplificar as coisas e olhar somente para a relação entre expectativa de vida/tempo e como essa relação difere entre continente e país. 
+
+```{r}
+ggplot(gapminder, aes(x = year_orig, y = lifeExp, 
+                      group = country, color = continent)) +
+  geom_line(aes(size = highlight)) +
+  geom_smooth(method = "lm", aes(color = NULL, group = NULL), 
+              color = "grey60", size = 1, linetype = "21",
+              se = FALSE, show.legend = FALSE) +
+  geom_label_repel(data = filter(gapminder, year == 0, highlight == TRUE), 
+                   aes(label = country), direction = "y", size = 3, seed = 1234, 
+                   show.legend = FALSE) +
+  annotate(geom = "label", label = "Global trend", x = 1952, y = 50,
+           size = 3, color = "grey60") +
+  scale_size_manual(values = c(0.075, 1), guide = "none") +
+  scale_color_okabe_ito(order = c(2, 3, 6, 1)) +
+  labs(x = NULL, y = "Life expectancy", color = "Continent") +
+  theme_clean() +
+  theme(legend.position = "bottom")
+## `geom_smooth()` using formula 'y ~ x'
+
+```
+
+  Através de uma breve análise, percebemos que a expectativa de vida de quase todos os países aumentou com o tempo. Todos os países têm diferentes pontos de partida ou interceptações em 1952. Além disso, diferenças específicas do continente influenciam essas interceptações, por exemplo, a Europa Ocidental tem uma expectativa de vida muito maior do que a África Subsaariana, e cada país tem suas próprias tendências ao longo do tempo. 
+  A fim de exemplificar, é de fácil entendimento,a comparação do Egito, que começa em valores baixos e depois sobe rapidamente entre os anos 1970 e 1990, com o Canadá, que começa com valores já altos e termina mais alto ainda. Existem também países que observam tendências negativas ao longo do tempo, como Ruanda e Serra Leoa.
+  Com o objetivo de facilitarmos nosso entendimento, começaremos a desenvolver  nossa metodologia com um modelo de regressão não multinível regular. Na verdade, executaremos dois  modelos diferentes: um com PIB per capita escalado e centralizado e outro com PIB per capita registrado em escala e centralizado, isto, para nos acostumarmos a aumentar os coeficientes.
+  Esses modelos simples se encaixam perfeitamente em menos de um segundo, mas à medida que adicionamos mais complexidade, o PIB per capita não registrado fica muito instável e difícil de controlar, então mudaremos para a versão registrada.
+  
+  CÓDIGO
+
+
+
 ```{r}
 gdp_mean_sd <- attributes(gapminder$gdpPercap_z)
 gdp_mean <- gdp_mean_sd$`scaled:center`
@@ -151,6 +208,7 @@ gdp_log_sd <- gdp_log_mean_sd$`scaled:scale`
 
 Regular regression
 ```{r}
+
 model_gdp_boring <- brm(
   bf(lifeExp ~ gdpPercap_z + year),
   data = gapminder,
