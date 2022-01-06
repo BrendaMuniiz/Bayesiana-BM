@@ -162,6 +162,7 @@ ggplot(gapminder, aes(x = gdpPercap, y = lifeExp, color = continent)) +
 
 ## Item 1:
 ### Como foi feita a escolha do modelo:
+
   Modelos multiníveis são modelos de regressão que incorporam efeitos específicos de grupo. Os grupos podem representar diferentes níveis de hierarquia. Presume-se que os efeitos específicos do grupo variam aleatoriamente de acordo com alguma distribuição a priori, geralmente uma distribuição normal. Essa suposição torna os modelos multiníveis candidatos naturais para uma análise bayesiana. Destaca-se, que os modelos multiníveis bayesianos assumem que outros parâmetros do modelo, tais como coeficientes de regressão e componentes de variância - variâncias de efeitos específicos de grupo - também são aleatórios.
   Vale ressaltar ainda, que quando o interesse principal de um problema está voltado para comparação de grupos, a modelagem multinível bayesiana pode fornecer distribuições inteiras de efeitos específicos de grupo.
 Agora que já entendemos o funcionamento da modelagem multinível, vamos simplificar as coisas e olhar somente para a relação entre expectativa de vida/tempo e como essa relação difere entre continente e país. 
@@ -192,9 +193,49 @@ ggplot(gapminder, aes(x = year_orig, y = lifeExp,
   Com o objetivo de facilitarmos nosso entendimento, começaremos a desenvolver  nossa metodologia com um modelo de regressão não multinível regular. Na verdade, executaremos dois  modelos diferentes: um com PIB per capita escalado e centralizado e outro com PIB per capita registrado em escala e centralizado, isto, para nos acostumarmos a aumentar os coeficientes.
   Esses modelos simples se encaixam perfeitamente em menos de um segundo, mas à medida que adicionamos mais complexidade, o PIB per capita não registrado fica muito instável e difícil de controlar, então mudaremos para a versão registrada.
   
-  CÓDIGO
+```{r}
+
+model_gdp_boring <- brm(
+  bf(lifeExp ~ gdpPercap_z + year),
+  data = gapminder,
+  chains = 4, seed = bayes_seed
+)
+
+model_gdp_boring_log <- brm(
+  bf(lifeExp ~ gdpPercap_log_z + year),
+  data = gapminder,
+  chains = 4, seed = bayes_seed
+)
+
+```
+
+```{r}
+tidy(model_gdp_boring)
+
+tidy(model_gdp_boring_log)
+
+```
 
 
+  Como resultado, temos que os coeficientes para as variáveis em escala representam o aumento na expectativa de vida, a qual, segue um aumento de 1 desvio padrão no PIB per capita (não registrado e registrado). Mas, não pensamos em desvios padrões, por isso, optamos por deslocar esses coeficientes de volta às suas escalas originais. Para fazer isso, precisaremos dividir pelo desvio padrão das colunas originais. Também multiplicaremos o coeficiente do PIB per capita por 1.000 para que possamos falar sobre as mudanças na expectativa de vida que seguem um aumento de $ 1.000 na riqueza. E, por fim, dividiremos o coeficiente do PIB per capita registrado por 10 para que possamos falar sobre as mudanças na expectativa de vida, que segue um aumento de 10% na riqueza. Além disso, é esta combinação de across () e ifelse () dentro de mutate () que nos permite redimensionar várias colunas para apenas uma única linha. Todos os resultados dessas mudanças serão representadas visualmente nos gráficos expostos no item 1 dos resultados.
+  
+```{r}
+tidy(model_gdp_boring) %>% 
+  mutate(across(c(estimate, std.error, conf.low, conf.high),
+                ~ifelse(term == "gdpPercap_z", (. / gdp_sd) * 1000, .)))
+
+tidy(model_gdp_boring_log) %>% 
+  mutate(across(c(estimate, std.error, conf.low, conf.high),
+                ~ifelse(term == "gdpPercap_log_z", (. / gdp_log_sd), .)))
+
+```
+
+## Item 2:
+### Como calcular e visualizar esses diferentes efeitos globais e específicos de cada país.
+
+  Na nossa análise descritiva dos dados foi mencionada uma necessidade de calcular e visualizar os efeitos específicos de cada país. Para realizarmos isso, consideramos no nosso processo, primeiramente, a expectativa de vida média ao longo do tempo. Depois, traçamos a expectativa de vida prevista. Por fim, nos preocupamos com o efeito do PIB, trabalhando com um modelo (expVida ~ PIB)*, o qual poderemos visualizar posteriormente. Utilizaremos a distribuição  a posteriori desse coeficiente para estudarmos a variação específica de cada país. Também usaremos a função emtrends () da biblioteca emmeans, para que possamos calcular efeitos marginais médios instantâneos (Item 5).
+Usaremos a versão centralizada do PIB per capita para acelerar o ajuste do modelo, o que significa que precisaremos remover a escala dos coeficientes para interpretá-los. Como um aumento de $1 não resulta em uma grande diferença na expectativa de vida, utilizaremos como nossa unidade de aumento de riqueza como sendo $1.000 no PIB per capita. Ou seja, toda vez que formos interpretar os coeficientes utilizaremos $1.000 como sendo equivalente a uma unidade de medida. À medida que esses modelos ficam mais complexos, mudaremos do PIB per capita regular para o PIB per capita registrado para fins de cálculo.
+Podemos observar abaixo a extração da média e do desvio padrão do PIB per capita centralizado e do PIB per capita registrado centralizado, o que nos auxiliará no nosso processo:
 
 ```{r}
 gdp_mean_sd <- attributes(gapminder$gdpPercap_z)
@@ -206,66 +247,111 @@ gdp_log_mean <- gdp_log_mean_sd$`scaled:center`
 gdp_log_sd <- gdp_log_mean_sd$`scaled:scale`
 ```
 
-Regular regression
+* -> As variáveis significam: expVida = expectativa de vida e PIB = PIB per capita.
+
+
+## Item 3:
+### Relação entre modelo multinível com essa diferença entre países
+
+(gráfico das diferentes trajetórias ao longo do tempo)
+
 ```{r}
 
-model_gdp_boring <- brm(
-  bf(lifeExp ~ gdpPercap_z + year),
+```
+
+A partir da análise gráfica acima disponível, constata-se que cada país possui uma relação ligeiramente diferente entre riqueza e expectativa de vida. Usando a modelagem multinível, podemos incorporar compensações específicas do país tanto no intercepto ($\beta_0$) quanto no efeito PIB per capita fixo ($\beta_1$). Como sempre, cada uma dessas compensações específicas do país possuem sua própria variação, a qual chamamos de $\tau$.
+
+$ ExpVida = (\beta_0 + b_{0,país}) + (\beta_1PIB + b_{1,país} + \beta_2ano + \ $
+$ b_{0,país} ~ N(0, \tau_0)$
+$ b_{1,país} ~ N(0, \tau_1) $
+
+A sintaxe para este termo de efeitos aleatórios é:
+
+(1 + PIB_z | país)
+
+ considerando que estamos permitindo que o intercepto (que é igual a 1) e o PIB per capita variem por país. Usaremos as versões em escala do PIB per capita regular e do PIB per capita registrado.
+ 
+ Utilizamos o argumento ‘QR’ para decomposição do brms para descorrelacionarmos covariáveis altamente correlacionadas (como ano e PIB em todo o país), o que acelera nosso cálculo.
+ 
+```{r}
+
+model_gdp_country_only <- brm(
+  bf(lifeExp ~ gdpPercap_z + year + (1 + gdpPercap_z | country),
+     decomp = "QR"),
   data = gapminder,
-  chains = 4, seed = bayes_seed
+  chains = 4, seed = bayes_seed,
+  threads = threading(2)  
 )
-## Start sampling
 
-model_gdp_boring_log <- brm(
-  bf(lifeExp ~ gdpPercap_log_z + year),
+
+model_gdp_country_only_log <- brm(
+  bf(lifeExp ~ gdpPercap_log_z + year + (1 + gdpPercap_log_z | country),
+     decomp = "QR"),
   data = gapminder,
-  chains = 4, seed = bayes_seed
+  chains = 4, seed = bayes_seed,
+  threads = threading(2)  
 )
-## Start sampling
-```
 
+```
+ 
+
+ 
+## Item 4:
+### Incluindo  efeitos aleatórios para diferenças específicas do ano no PIB efeito per capita, que são independentes das diferenças específicas de cada país no modelo.
+
+Cada país obtém seu próprio intercepto e declives do PIB e do ano e compensações específicas do ano no declive do PIB
+Abordar nosso modelo de modo:
+
+(expVida ~ PIB_z + ano + ( 1 + PIB_z + ano | país ) 
+
+por si já seria suficiente. Porém, se estivermos interessados em incluir efeitos aleatórios para diferenças específicas do ano no PIB per capita, que são independentes das diferenças específicas de cada país, devemos sofisticar nossa abordagem. Casos que podem ilustrar essa necessidade são recessões ou pandemias. Nós faremos isso de modo que cada país obtenha seu próprio intercepto e declives do PIB e do ano, e compensações específicas do ano no declive do PIB.
+Para fazermos isso, adicionaremos compensações baseadas no ano independentes ao intercepto ($\beta_{0, ano}$) e ao efeito do PIB, de modo que:
+
+$ ExpVida = (\beta_0 + b_{0, país} + b_{0, ano}) + \beta_1PIB + b_{1, país} + b_{1, ano}) + (\beta_2ano + b_{2, país}) $
+
+$ b_{0, país} ~ N(0, \tau_{0, país})$
+$ b_{1, país} ~ N(0, \tau_{1, país}) $
+$ b_{2, país} ~ N(0, \tau_{2, país})$
+$ b_{0, ano} ~ N(0, \tau_{0, ano}) $
+$ b_{1, ano} ~ N(0, \tau_{1, ano}) $
+
+Por fim, sofisticamos nossa abordagem de modo a obter:
+
+ (1 + PIB_log_z | ano) + (1 + PIB_log_z + ano | país).
+ 
+ É interessante ressaltar que estamos trabalhando apenas com o PIB per capita registrado. O intercepto e o efeito do PIB obtêm suas próprias compensações específicas do ano, e o intercepto, o efeito do PIB e o efeito do ano obtêm suas próprias compensações específicas do país.
+ 
 ```{r}
-tidy(model_gdp_boring)
-## # A tibble: 4 × 8
-##   effect   component group    term            estimate std.error conf.low conf.high
-##   <chr>    <chr>     <chr>    <chr>              <dbl>     <dbl>    <dbl>     <dbl>
-## 1 fixed    cond      <NA>     (Intercept)       52.6      0.458    51.6      53.4  
-## 2 fixed    cond      <NA>     gdpPercap_z        6.47     0.246     5.98      6.95 
-## 3 fixed    cond      <NA>     year               0.244    0.0141    0.216     0.272
-## 4 ran_pars cond      Residual sd__Observation    9.71     0.170     9.39     10.1
-tidy(model_gdp_boring_log)
-## # A tibble: 4 × 8
-##   effect   component group    term            estimate std.error conf.low conf.high
-##   <chr>    <chr>     <chr>    <chr>              <dbl>     <dbl>    <dbl>     <dbl>
-## 1 fixed    cond      <NA>     (Intercept)       53.8     0.320     53.2      54.4  
-## 2 fixed    cond      <NA>     gdpPercap_log_z    9.55    0.172      9.20      9.88 
-## 3 fixed    cond      <NA>     year               0.198   0.00989    0.179     0.217
-## 4 ran_pars cond      Residual sd__Observation    6.92    0.120      6.68      7.16
+model_gdp_country_year_year <- brm(
+  bf(lifeExp ~ gdpPercap_log_z + year + (1 + gdpPercap_log_z | year) + 
+       (1 + gdpPercap_log_z + year | country),
+     decomp = "QR"),
+  data = gapminder,
+  cores = 4, chains = 4, seed = bayes_seed,
+  threads = threading(2)
+)
 ```
-
+ 
+ 
 ```{r}
-tidy(model_gdp_boring) %>% 
-  mutate(across(c(estimate, std.error, conf.low, conf.high),
-                ~ifelse(term == "gdpPercap_z", (. / gdp_sd) * 1000, .)))
-## # A tibble: 4 × 8
-##   effect   component group    term            estimate std.error conf.low conf.high
-##   <chr>    <chr>     <chr>    <chr>              <dbl>     <dbl>    <dbl>     <dbl>
-## 1 fixed    cond      <NA>     (Intercept)       52.6      0.458    51.6      53.4  
-## 2 fixed    cond      <NA>     gdpPercap_z        0.660    0.0251    0.610     0.709
-## 3 fixed    cond      <NA>     year               0.244    0.0141    0.216     0.272
-## 4 ran_pars cond      Residual sd__Observation    9.71     0.170     9.39     10.1
+rstan::get_elapsed_time(model_gdp_country_year_year$fit) %>% 
+  as_tibble(rownames = "chain") %>% mutate(total_seconds = warmup + sample)
 
-tidy(model_gdp_boring_log) %>% 
-  mutate(across(c(estimate, std.error, conf.low, conf.high),
-                ~ifelse(term == "gdpPercap_log_z", (. / gdp_log_sd), .)))
-## # A tibble: 4 × 8
-##   effect   component group    term            estimate std.error conf.low conf.high
-##   <chr>    <chr>     <chr>    <chr>              <dbl>     <dbl>    <dbl>     <dbl>
-## 1 fixed    cond      <NA>     (Intercept)       53.8     0.320     53.2      54.4  
-## 2 fixed    cond      <NA>     gdpPercap_log_z    7.74    0.139      7.45      8.01 
-## 3 fixed    cond      <NA>     year               0.198   0.00989    0.179     0.217
-## 4 ran_pars cond      Residual sd__Observation    6.92    0.120      6.68      7.16
 ```
+
+### Item 5: 
+## O que são efeitos marginais médios instantâneos
+
+  Um efeito marginal é criado ao se encaixar um acréscimo em certo comportamento. O efeito marginal médio instantâneo fornece um efeito sobre uma probabilidade, basicamente trata-se da variação média da probabilidade quando x aumenta em uma unidade.
+  
+  
+# Resultados
+
+## Resultados para o modelo base (item 1):
+
+Com base no modelo inicial construído no item 1 da metodologia, temos que, quando o ano é 0 (ou em 1952) e quando o PIB per capita de um país é $ 0, a esperança média de vida é de 52,57 anos em média, ou seja, ele aumenta em 0,24 anos anualmente depois disso, mantendo a renda constante, e aumenta em 0,66 anos para cada $ 1.000 de aumento na riqueza, mantendo o tempo constante.
+Se olharmos, ainda, para o PIB per capita registrado,observamos que o aumento de 10% no PIB per capita está associado a um aumento de 0,774 (7,74 / 10) anos na expectativa de vida, mantendo assim o tempo constante.
+
 
 ```{r}
 ame_model_gdp_boring <- model_gdp_boring %>% 
@@ -319,105 +405,44 @@ plot_ame_gdp_log <- ggplot(pred_ame_model_gdp_boring_log, aes(x = .value)) +
                   theme = theme_clean() + theme(plot.subtitle = element_text(family = "Consolas")))
 ```
 
-Each country gets its own intercept and GDP slope
-```{r}
-model_gdp_country_only <- brm(
-  bf(lifeExp ~ gdpPercap_z + year + (1 + gdpPercap_z | country),
-     decomp = "QR"),
-  data = gapminder,
-  chains = 4, seed = bayes_seed,
-  threads = threading(2)  # Two CPUs per chain to speed things up
-)
-## Start sampling
 
-model_gdp_country_only_log <- brm(
-  bf(lifeExp ~ gdpPercap_log_z + year + (1 + gdpPercap_log_z | country),
-     decomp = "QR"),
-  data = gapminder,
-  chains = 4, seed = bayes_seed,
-  threads = threading(2)  # Two CPUs per chain to speed things up
-)
-## Start sampling
-```
+## Modelo com PIB variando por país:
+
+
+Os coeficientes em nível de população global são semelhantes aos que vimos anteriormente no modelo básico sem efeitos de país aleatórios: mantendo constantes as tendências anuais, a expectativa de vida aumenta em 1,17 anos para cada aumento de $ 1.000 na riqueza e 0,341 anos para cada aumento de 10% na riqueza, em média. 
 
 ```{r}
-# Model with regular GDP per capita
-rstan::get_elapsed_time(model_gdp_country_only$fit) %>% 
-  as_tibble(rownames = "chain") %>% mutate(total_seconds = warmup + sample)
-## # A tibble: 4 × 4
-##   chain   warmup sample total_seconds
-##   <chr>    <dbl>  <dbl>         <dbl>
-## 1 chain:1   22.6   21.4          44.0
-## 2 chain:2   25.6   21.1          46.7
-## 3 chain:3   24.6   21.4          46.0
-## 4 chain:4   23.7   21.3          44.9
 
-# Model with logged GDP per capita 
-rstan::get_elapsed_time(model_gdp_country_only_log$fit) %>% 
-  as_tibble(rownames = "chain") %>% mutate(total_seconds = warmup + sample)
-## # A tibble: 4 × 4
-##   chain   warmup sample total_seconds
-##   <chr>    <dbl>  <dbl>         <dbl>
-## 1 chain:1   12.2   11.1          23.2
-## 2 chain:2   12.0   10.9          22.9
-## 3 chain:3   11.7   11.0          22.8
-## 4 chain:4   12.3   11.0          23.3
-```
-
-###Fixed (population-level) effects
-```{r}
-# Unscale both the GDP coefficient and the GDP random variance coefficient
 tidy(model_gdp_country_only) %>% 
   mutate(across(c(estimate, std.error, conf.low, conf.high),
                 ~ifelse(term %in% c("gdpPercap_z", "sd__gdpPercap_z"), 
                         (. / gdp_sd) * 1000, .)))
-## # A tibble: 7 × 8
-##   effect   component group    term                   estimate std.error conf.low conf.high
-##   <chr>    <chr>     <chr>    <chr>                     <dbl>     <dbl>    <dbl>     <dbl>
-## 1 fixed    cond      <NA>     (Intercept)              57.3     1.17     55.1       59.7  
-## 2 fixed    cond      <NA>     gdpPercap_z               1.17    0.197     0.822      1.60 
-## 3 fixed    cond      <NA>     year                      0.310   0.00609   0.298      0.322
-## 4 ran_pars cond      country  sd__(Intercept)           9.98    0.930     8.33      12.0  
-## 5 ran_pars cond      country  sd__gdpPercap_z           1.74    0.211     1.34       2.18 
-## 6 ran_pars cond      country  cor__(Intercept).gdpP…    0.201   0.146    -0.0995     0.469
-## 7 ran_pars cond      Residual sd__Observation           2.92    0.0587    2.81       3.04
 
 tidy(model_gdp_country_only_log) %>% 
   mutate(across(c(estimate, std.error, conf.low, conf.high),
                 ~ifelse(term %in% c("gdpPercap_log_z", "sd__gdpPercap_log_z"), 
                         (. / gdp_log_sd), .)))
-## # A tibble: 7 × 8
-##   effect   component group    term                   estimate std.error conf.low conf.high
-##   <chr>    <chr>     <chr>    <chr>                     <dbl>     <dbl>    <dbl>     <dbl>
-## 1 fixed    cond      <NA>     (Intercept)              53.7     0.960     51.7     55.5   
-## 2 fixed    cond      <NA>     gdpPercap_log_z           3.41    0.577      2.30     4.58  
-## 3 fixed    cond      <NA>     year                      0.283   0.00638    0.271    0.296 
-## 4 ran_pars cond      country  sd__(Intercept)          11.2     0.755      9.81    12.8   
-## 5 ran_pars cond      country  sd__gdpPercap_log_z       5.69    0.441      4.87     6.56  
-## 6 ran_pars cond      country  cor__(Intercept).gdpP…   -0.281   0.102     -0.470   -0.0749
-## 7 ran_pars cond      Residual sd__Observation           2.76    0.0532     2.66     2.87
+
 ```
 
-###Country-level random effects
+Também temos alguns termos de efeitos aleatórios que podemos interpretar. A variância da interceptação (sd __ (Intercept)) corresponde a ($\tau_0$) e nos mostra o quanto a expectativa de vida oscila entre os países. Também podemos ver em que proporção essa variação em nível de país contribui para a variação residual total do modelo. Para o modelo do PIB per capita, a estrutura do país contribuiu com 77% (9,98 / (9,98 + 2,92)) da variação total da expectativa de vida, enquanto contribuiu com 80% (11,19 / (11,19 + 2,76)) no PIB per capita registrado modelo.
+O termo sd__PID_z é ($\tau_1$ - simbolo) e mostra a variação específica do país no efeito do PIB. Isso é menor do que a variância de interceptação, mas ocorre porque o efeito do PIB é uma inclinação que mede a mudança marginal na expectativa de vida conforme a riqueza aumenta em uma unidade ($ 1.000), não a própria expectativa de vida. (Nós removemos a escala dos valores de sd__PIB_z e sd__PIB_log_z aqui também, como fizemos com seus coeficientes fixos reais.)
+Finalmente, temos um termo que mostra a correlação das interceptações e inclinações específicas do país. No modelo regular do PIB per capita, vemos uma correlação de 0,2, o que significa que os países com menores interceptos estão associados a menores efeitos do PIB - os países que começaram pobres em 1952 crescem mais devagar. Essa correlação se inverte no modelo de PIB per capita registrado, onde temos uma correlação de -0,28, o que implica que países com menores interceptos estão associados a efeitos de PIB maiores - países que começaram pobres em 1952 crescem mais rápido. Uma hipótese do porque essa reversão ocorre é que as duas medidas do PIB capturam coisas diferentes: a versão registrada mostra mudanças em ordens de magnitude, enquanto a versão regular mostra mudanças nos valores em dólares. De alguma forma, essa diferença faz a correlação virar.
+
+
+Como um atributo extra, podemos observar as compensações em nível de país para o intercepto e a inclinação do PIB.
+
 ```{r}
 ranef(model_gdp_country_only)$country %>%
   as_tibble(rownames = "country") %>% 
   filter(country %in% countries$country) %>% 
   select(country, starts_with("Estimate")) %>% 
-  # Unscale the GDP offsets
   mutate(Estimate.gdpPercap_z = Estimate.gdpPercap_z / gdp_sd * 1000)
-## # A tibble: 8 × 3
-##   country      Estimate.Intercept Estimate.gdpPercap_z
-##   <chr>                     <dbl>                <dbl>
-## 1 Bolivia                  -0.720                1.89 
-## 2 Canada                   11.5                 -1.34 
-## 3 Egypt                     1.73                 1.67 
-## 4 Italy                     8.77                -1.24 
-## 5 Pakistan                  0.703                0.897
-## 6 Portugal                  4.22                -1.09 
-## 7 Sierra Leone             -9.64                 2.06 
-## 8 Yemen, Rep.               9.59                 4.05
+
 ```
+
+
+Também podemos olhar para o efeito fixo + deslocamento aleatório já combinado para interceptações e declives específicos do país. A interceptação e a inclinação são diferentes em cada país, enquanto o coeficiente do ano é o mesmo, como esperado:
 
 ```{r}
 coef(model_gdp_country_only)$country %>%
@@ -426,18 +451,11 @@ coef(model_gdp_country_only)$country %>%
   select(country, starts_with("Estimate")) %>% 
   # Unscale the GDP offsets
   mutate(Estimate.gdpPercap_z = Estimate.gdpPercap_z / gdp_sd * 1000)
-## # A tibble: 8 × 4
-##   country      Estimate.Intercept Estimate.gdpPercap_z Estimate.year
-##   <chr>                     <dbl>                <dbl>         <dbl>
-## 1 Bolivia                    56.6               3.07           0.310
-## 2 Canada                     68.8              -0.166          0.310
-## 3 Egypt                      59.0               2.84           0.310
-## 4 Italy                      66.1              -0.0702         0.310
-## 5 Pakistan                   58.0               2.07           0.310
-## 6 Portugal                   61.5               0.0820         0.310
-## 7 Sierra Leone               47.7               3.23           0.310
-## 8 Yemen, Rep.                66.9               5.22           0.310
 ```
+
+Visualizando modelo final:
+
+Podemos ver as distribuições a posteriori completas para esses efeitos de PIB específicos de cada país para ter uma noção de sua variação. Olhar para o PIB regular mostra algumas tendências interessantes - e revela alguns problemas potenciais com o modelo. Em todos os países, exceto Canadá, Itália e Portugal, um aumento de US $ 1.000 no PIB per capita - mantendo todos os outros fatores constantes - está associado a um aumento de 2 a 5 anos na expectativa de vida. Essa diferença é “estatisticamente significativa” se quisermos usar esse tipo de linguagem frequentista - os intervalos confiáveis para todos esses efeitos estão bem longe de 0. Canadá, Itália e Portugal, entretanto, não veem nenhum efeito prático do PIB. Suas inclinações são essencialmente zero e são estimadas com precisão em torno de zero (por isso obtemos picos bem altos). Isso poderia ser um artefato do modelo - esses três países já tinham altos níveis de renda e Stan luta com extremos como esse.
 
 ```{r}
 ame_model_gdp_country_only <- model_gdp_country_only %>% 
@@ -467,67 +485,43 @@ ggplot(pred_ame_model_gdp_country_only, aes(x = .value)) +
   theme(plot.subtitle = element_text(family = "Consolas"))
 ```
 
-###⭐ Each country gets its own intercept and GDP and year slopes ⭐
+
+Em vez disso, obtemos algumas distribuições de aparência mais normal quando observamos o efeito do PIB per capita registrado. Canadá, Itália e Portugal ainda são efeitos nulos aparentes, uma vez que seus intervalos de credibilidade incluem zero, enquanto todos os outros países têm efeitos positivos. Um aumento de 10% no PIB per capita está associado a um aumento de 0,5 a 1,2 ano na expectativa de vida, em média.
+
 
 ```{r}
-model_gdp_country_year <- brm(
-  bf(lifeExp ~ gdpPercap_z + year + (1 + gdpPercap_z + year | country),
-     decomp = "QR"),
-  data = gapminder,
-  chains = 4, seed = bayes_seed,
-  threads = threading(2)  # Two CPUs per chain to speed things up
-)
-## Start sampling
+ame_model_gdp_country_only_log <- model_gdp_country_only_log %>% 
+  emtrends(~ country,
+           var = "gdpPercap_log_z",
+           at = list(year = 0, country = countries$country),
+           epred = TRUE, re_formula = NULL)
+ame_model_gdp_country_only_log
 
-model_gdp_country_year_log <- brm(
-  bf(lifeExp ~ gdpPercap_log_z + year + (1 + gdpPercap_log_z + year | country),
-     decomp = "QR"),
-  data = gapminder,
-  chains = 4, seed = bayes_seed,
-  threads = threading(2)  # Two CPUs per chain to speed things up
-)
-## Start sampling
+pred_ame_model_gdp_country_only_log <- ame_model_gdp_country_only_log %>% 
+  gather_emmeans_draws() %>% 
+  mutate(.value = .value / gdp_log_sd / 10) %>% 
+  left_join(countries, by = "country")
+
+ggplot(pred_ame_model_gdp_country_only_log, aes(x = .value)) +
+  stat_halfeye(aes(fill = continent)) +
+  geom_vline(xintercept = 0) +
+  scale_fill_okabe_ito(order = c(2, 3, 6, 1), guide = "none") +
+  labs(title = paste0("Average marginal effect of GDP per capita", "\n",
+                      "(intercepts and slope of GDP per capita by country)"), 
+       subtitle = "lifeExp ~ gdpPercap_z + year + (1 + gdpPercap_z | country)",
+       x = paste0("Average marginal effect on life expectancy", "\n", 
+                  "of a 10% increase in GDP per capita"), 
+       y = "Density",
+       caption = "80% and 95% credible intervals shown with error bar") +
+  facet_nested_wrap(vars(continent, country), nrow = 2, strip = nested_settings) +
+  theme_clean() +
+  theme(plot.subtitle = element_text(family = "Consolas"))
+
 ```
 
-```{r}
-# Model with regular GDP per capita
-rstan::get_elapsed_time(model_gdp_country_year$fit) %>% 
-  as_tibble(rownames = "chain") %>% mutate(total_seconds = warmup + sample)
-## # A tibble: 4 × 4
-##   chain   warmup sample total_seconds
-##   <chr>    <dbl>  <dbl>         <dbl>
-## 1 chain:1   32.9   53.5          86.4
-## 2 chain:2   33.8   49.1          82.9
-## 3 chain:3   34.2   30.0          64.2
-## 4 chain:4   39.5   29.0          68.5
+## Modelo que incorpora diferenças específicas de cada país tanto para o PIB quanto para o ano.
 
-# Model with logged GDP per capita 
-rstan::get_elapsed_time(model_gdp_country_year_log$fit) %>% 
-  as_tibble(rownames = "chain") %>% mutate(total_seconds = warmup + sample)
-## # A tibble: 4 × 4
-##   chain   warmup sample total_seconds
-##   <chr>    <dbl>  <dbl>         <dbl>
-## 1 chain:1   20.9   16.8          37.7
-## 2 chain:2   21.5   17.2          38.7
-## 3 chain:3   21.4   16.9          38.3
-## 4 chain:4   21.2   17.1          38.3
-```
-
-```{r}
-# Bad R-hats and low effective sample sizes
-bayestestR::diagnostic_posterior(model_gdp_country_year)
-##       Parameter Rhat   ESS     MCSE
-## 1 b_gdpPercap_z 1.05  85.3 0.119554
-## 2   b_Intercept 1.03 253.6 0.067100
-## 3        b_year 1.00 981.7 0.000516
-
-# Okay R-hats and okay-ish effective sample sizes
-bayestestR::diagnostic_posterior(model_gdp_country_year_log)
-##           Parameter Rhat  ESS     MCSE
-## 1 b_gdpPercap_log_z 1.00 1707 0.012333
-## 2       b_Intercept 1.01  379 0.046063
-## 3            b_year 1.00  625 0.000732
-```
+Os coeficientes em nível de população global são novamente semelhantes aos que vimos nos modelos anteriores: mantendo as tendências anuais constantes, a expectativa de vida aumenta em 0,45 anos para cada aumento de $ 1.000 na riqueza e 0,427 anos para cada aumento de 10% na riqueza, em média.
 
 ```{r}
 # Unscale both the GDP coefficient and the GDP random variance coefficient
@@ -535,40 +529,17 @@ tidy(model_gdp_country_year) %>%
   mutate(across(c(estimate, std.error, conf.low, conf.high),
                 ~ifelse(term %in% c("gdpPercap_z", "sd__gdpPercap_z"), 
                         (. / gdp_sd) * 1000, .)))
-## # A tibble: 10 × 8
-##    effect   component group    term                  estimate std.error conf.low conf.high
-##    <chr>    <chr>     <chr>    <chr>                    <dbl>     <dbl>    <dbl>     <dbl>
-##  1 fixed    cond      <NA>     (Intercept)             52.6      1.07     50.5      54.7  
-##  2 fixed    cond      <NA>     gdpPercap_z              0.448    0.112     0.263     0.691
-##  3 fixed    cond      <NA>     year                     0.318    0.0162    0.287     0.349
-##  4 ran_pars cond      country  sd__(Intercept)         11.1      0.726     9.84     12.7  
-##  5 ran_pars cond      country  sd__gdpPercap_z          0.685    0.209     0.298     1.04 
-##  6 ran_pars cond      country  sd__year                 0.174    0.0122    0.152     0.200
-##  7 ran_pars cond      country  cor__(Intercept).gdp…   -0.162    0.224    -0.632     0.176
-##  8 ran_pars cond      country  cor__(Intercept).year   -0.587    0.0803   -0.730    -0.419
-##  9 ran_pars cond      country  cor__gdpPercap_z.year   -0.470    0.0997   -0.644    -0.257
-## 10 ran_pars cond      Residual sd__Observation          2.08     0.0579    1.98      2.21
 
 tidy(model_gdp_country_year_log) %>% 
   mutate(across(c(estimate, std.error, conf.low, conf.high),
                 ~ifelse(term %in% c("gdpPercap_log_z", "sd__gdpPercap_log_z"), 
                         (. / gdp_log_sd), .)))
-## # A tibble: 10 × 8
-##    effect   component group    term                  estimate std.error conf.low conf.high
-##    <chr>    <chr>     <chr>    <chr>                    <dbl>     <dbl>    <dbl>     <dbl>
-##  1 fixed    cond      <NA>     (Intercept)             52.1      0.897    50.3      53.8  
-##  2 fixed    cond      <NA>     gdpPercap_log_z          4.27     0.413     3.46      5.06 
-##  3 fixed    cond      <NA>     year                     0.258    0.0183    0.222     0.294
-##  4 ran_pars cond      country  sd__(Intercept)         10.5      0.718     9.14     12.0  
-##  5 ran_pars cond      country  sd__gdpPercap_log_z      3.28     0.384     2.54      4.05 
-##  6 ran_pars cond      country  sd__year                 0.202    0.0146    0.174     0.232
-##  7 ran_pars cond      country  cor__(Intercept).gdp…    0.385    0.114     0.146     0.593
-##  8 ran_pars cond      country  cor__(Intercept).year   -0.712    0.0480   -0.796    -0.609
-##  9 ran_pars cond      country  cor__gdpPercap_log_z…   -0.694    0.0700   -0.814    -0.546
-## 10 ran_pars cond      Residual sd__Observation          1.97     0.0411    1.89      2.05
+
 ```
 
-Country-level variation and random effects
+Vamos renunciar a interpretações detalhadas de todos os nossos novos valores de efeitos aleatórios e, em vez disso, apenas apontar que temos estimativas para cada um dos: variação com base no país na interceptação, a inclinação do PIB e a inclinação do ano. Também temos três correlações diferentes agora: a correlação entre a interceptação e a curva do PIB, a interceptação e a curva do ano, e a curva do PIB e do ano. 
+Se olharmos para os coeficientes em nível de país, podemos ver que as interceptações, as inclinações do PIB e as inclinações do ano variam em valores diferentes entre os países, conforme pretendido.
+
 ```{r}
 coef(model_gdp_country_year)$country %>%
   as_tibble(rownames = "country") %>% 
@@ -576,19 +547,9 @@ coef(model_gdp_country_year)$country %>%
   select(country, starts_with("Estimate")) %>% 
   # Unscale the GDP offsets
   mutate(Estimate.gdpPercap_z = Estimate.gdpPercap_z / gdp_sd * 1000)
-## # A tibble: 8 × 4
-##   country      Estimate.Intercept Estimate.gdpPercap_z Estimate.year
-##   <chr>                     <dbl>                <dbl>         <dbl>
-## 1 Bolivia                    40.5               0.343          0.487
-## 2 Canada                     68.5               0.0602         0.196
-## 3 Egypt                      42.9               0.277          0.525
-## 4 Italy                      66.7               0.0664         0.241
-## 5 Pakistan                   47.0               0.479          0.385
-## 6 Portugal                   61.3               0.0401         0.323
-## 7 Sierra Leone               39.8               1.53           0.226
-## 8 Yemen, Rep.                34.0               0.547          0.576
 ```
 
+Como de costume, podemos visualizar a distribuição desses efeitos do PIB específicos de cada país. Se olharmos para o PIB regular, podemos ver imediatamente alguma estranheza - algumas dessas distribuições como Serra Leoa e Bolívia não são muito suaves, provavelmente porque não especificamos bons antecedentes e porque o modelo não convergiu totalmente. Essas coisas parecem bobas e não devemos dar muito valor a elas. Canadá, Itália e Portugal parecem ter efeitos nulos, junto com o Egito agora por qualquer motivo. Mas, novamente, estes são estranhos e o modelo não é tão bom, então podemos parar de olhar para isso.
 
 ```{r}
 ame_model_gdp_country_year <- model_gdp_country_year %>% 
@@ -619,6 +580,7 @@ ggplot(pred_ame_model_gdp_country_year, aes(x = .value)) +
 ```
 
 
+Os efeitos marginais médios para o PIB per capita registrado parecem muito mais suaves (e o modelo realmente convergiu), então eu confio mais nesses resultados. Depois de contabilizar as diferenças específicas de país e ano, Canadá, Itália e Portugal apresentam inclinações positivas do PIB per capita: um aumento de 10% no PIB per capita está associado a um aumento de 0,5hs na expectativa de vida. Vemos um efeito ligeiramente menor em Serra Leoa e efeitos ainda menores (e menos “significativos”) em todos os outros lugares.
 
 ```{r}
 ame_model_gdp_country_year_log <- model_gdp_country_year_log %>% 
@@ -648,22 +610,26 @@ ggplot(pred_ame_model_gdp_country_year_log, aes(x = .value)) +
   theme(plot.subtitle = element_text(family = "Consolas"))
 ```
 
+É realmente muito legal podermos olhar para o efeito específico do PIB na expectativa de vida em cada país individualmente, mas muitas vezes queremos apenas relatar um único número - qual é o efeito médio da saúde sobre a riqueza? Não queremos relatar 140 efeitos separados do PIB! Só queremos um!
+
+Podemos consolidar esses efeitos específicos do país em um único valor de duas maneiras diferentes:
+
+Relate uma grande média global ou o resultado médio previsto, ignorando os desvios específicos do país
+Relate o resultado médio previsto para um novo país hipotético
+Existem muitos detalhes sobre essas diferentes abordagens para encontrar efeitos marginais médios neste post aqui - acesse lá para aprender tudo sobre as nuances de fazer isso.
+
+Aqui, faremos as duas coisas: calcular uma grande média global e simular um novo país falso (vamos chamá-lo de Atlântida).
+
 
 ```{r}
-# Calculate the overall global effect
-# `re_formula = NA` means that no random effects will be incorporated
+
 ame_global_gdp_country_year <- model_gdp_country_year_log %>% 
   emtrends(~ 1,
            var = "gdpPercap_log_z",
            epred = TRUE, re_formula = NA)
 ame_global_gdp_country_year
-##  1       gdpPercap_log_z.trend lower.HPD upper.HPD
-##  overall                  5.27      4.32      6.29
-## 
-## Point estimate displayed: median 
-## HPD interval probability: 0.95
 
-# Get the posterior distribution of this global effect and make a plot
+
 pred_global_gdp_country_year <- ame_global_gdp_country_year %>% 
   gather_emmeans_draws() %>% 
   mutate(.value = (.value / gdp_log_sd) / 10) %>% 
@@ -679,11 +645,7 @@ plot_global_gdp_country_year <- ggplot(pred_global_gdp_country_year, aes(x = .va
   theme_clean() +
   theme(strip.text = element_text(size = rel(1.1)))
 
-# Calculate the effect for Atlantis
-# `re_formula = NULL` means the full random effects structure will be
-# incorporated. `allow_new_levels` lets R deal with a new country, and
-# `sample_new_levels = "gaussian"` means that the characteristics for this new
-# country will be based on random draws from the model
+
 ame_hypo_gdp_country_year <- model_gdp_country_year_log %>% 
   emtrends(~ 1 + country,
            var = "gdpPercap_log_z",
@@ -691,13 +653,7 @@ ame_hypo_gdp_country_year <- model_gdp_country_year_log %>%
            epred = TRUE, re_formula = NULL, 
            allow_new_levels = TRUE, sample_new_levels = "gaussian")
 ame_hypo_gdp_country_year
-##  country  gdpPercap_log_z.trend lower.HPD upper.HPD
-##  Atlantis                  5.14     -2.93      13.5
-## 
-## Point estimate displayed: median 
-## HPD interval probability: 0.95
 
-# Get the posterior distribution of this Atlantis effect and make a plot
 pred_hypo_gdp_country_year <- ame_hypo_gdp_country_year %>% 
   gather_emmeans_draws() %>% 
   mutate(.value = (.value / gdp_log_sd) / 10) %>% 
@@ -713,7 +669,6 @@ plot_hypo_gdp_country_year <- ggplot(pred_hypo_gdp_country_year, aes(x = .value)
   theme_clean() +
   theme(strip.text = element_text(size = rel(1.1)))
 
-# Show the two AME distributions side-by-side
 (plot_global_gdp_country_year | plot_hypo_gdp_country_year) +
   plot_annotation(title = paste0("Average marginal effect of GDP per capita", "\n",
                                  "(intercepts and slopes of both GDP per capita and year vary by country)"), 
@@ -723,105 +678,49 @@ plot_hypo_gdp_country_year <- ggplot(pred_hypo_gdp_country_year, aes(x = .value)
 ```
 
 
-Each country gets its own intercept and GDP and year slopes and year-specific offsets in the GDP slope
-```{r}
-model_gdp_country_year_year <- brm(
-  bf(lifeExp ~ gdpPercap_log_z + year + (1 + gdpPercap_log_z | year) + 
-       (1 + gdpPercap_log_z + year | country),
-     decomp = "QR"),
-  data = gapminder,
-  cores = 4, chains = 4, seed = bayes_seed,
-  threads = threading(2)  # Two CPUs per chain to speed things up
-)
-## Start sampling
-```
 
+## Modelo completo (incluindo efeitos aleatórios):
 
+Os coeficientes globais da população são novamente semelhantes aos que vimos nos modelos anteriores: mantendo constantes as tendências anuais, a expectativa de vida aumenta 0,332 anos para cada 10% de aumento na riqueza, em média.
 
 ```{r}
-rstan::get_elapsed_time(model_gdp_country_year_year$fit) %>% 
-  as_tibble(rownames = "chain") %>% mutate(total_seconds = warmup + sample)
-## # A tibble: 4 × 4
-##   chain   warmup sample total_seconds
-##   <chr>    <dbl>  <dbl>         <dbl>
-## 1 chain:1   32.4   18.4          50.8
-## 2 chain:2   32.9   18.4          51.3
-## 3 chain:3   44.9   19.8          64.7
-## 4 chain:4   31.7   21.1          52.9
-```
-
-```{r}
-# Unscale both the GDP coefficient and the GDP random variance coefficient
 tidy(model_gdp_country_year_year) %>% 
   mutate(across(c(estimate, std.error, conf.low, conf.high),
                 ~ifelse(term %in% c("gdpPercap_log_z", "sd__gdpPercap_log_z"), 
                         (. / gdp_log_sd), .)))
-## # A tibble: 13 × 8
-##    effect   component group    term                  estimate std.error conf.low conf.high
-##    <chr>    <chr>     <chr>    <chr>                    <dbl>     <dbl>    <dbl>     <dbl>
-##  1 fixed    cond      <NA>     (Intercept)             52.4      1.13   50.2        54.7  
-##  2 fixed    cond      <NA>     gdpPercap_log_z          3.32     0.407   2.53        4.09 
-##  3 fixed    cond      <NA>     year                     0.258    0.0250  0.208       0.307
-##  4 ran_pars cond      country  sd__(Intercept)         10.6      0.718   9.26       12.1  
-##  5 ran_pars cond      country  sd__gdpPercap_log_z      2.81     0.348   2.15        3.52 
-##  6 ran_pars cond      country  sd__year                 0.192    0.0135  0.168       0.220
-##  7 ran_pars cond      year     sd__(Intercept)          0.959    0.265   0.592       1.59 
-##  8 ran_pars cond      year     sd__gdpPercap_log_z      0.266    0.103   0.118       0.518
-##  9 ran_pars cond      country  cor__(Intercept).gdp…    0.276    0.129   0.00566     0.526
-## 10 ran_pars cond      country  cor__(Intercept).year   -0.645    0.0552 -0.746      -0.529
-## 11 ran_pars cond      country  cor__gdpPercap_log_z…   -0.678    0.0734 -0.803      -0.517
-## 12 ran_pars cond      year     cor__(Intercept).gdp…   -0.826    0.172  -0.994      -0.337
-## 13 ran_pars cond      Residual sd__Observation          1.80     0.0370  1.73        1.87
+
 ```
+
+
+Observe que há cinco valores de $\tau$ diferentes, conforme o esperado, e quatro correlações diferentes.
+Se olharmos para os coeficientes em nível de país, podemos ver que os interceptos, as inclinações do PIB e as inclinações do ano variam em valores diferentes entre os países:
 
 ```{r}
 coef(model_gdp_country_year)$country %>%
   as_tibble(rownames = "country") %>% 
   filter(country %in% countries$country) %>% 
   select(country, starts_with("Estimate")) %>% 
-  # Unscale the GDP offsets
   mutate(Estimate.gdpPercap_z = Estimate.gdpPercap_z / gdp_sd * 1000)
-## # A tibble: 8 × 4
-##   country      Estimate.Intercept Estimate.gdpPercap_z Estimate.year
-##   <chr>                     <dbl>                <dbl>         <dbl>
-## 1 Bolivia                    40.5               0.343          0.487
-## 2 Canada                     68.5               0.0602         0.196
-## 3 Egypt                      42.9               0.277          0.525
-## 4 Italy                      66.7               0.0664         0.241
-## 5 Pakistan                   47.0               0.479          0.385
-## 6 Portugal                   61.3               0.0401         0.323
-## 7 Sierra Leone               39.8               1.53           0.226
-## 8 Yemen, Rep.                34.0               0.547          0.576
+
 ```
 
+Ainda melhor, porém, é que a inclinação do PIB também muda a cada ano! Isso é o que ganhamos por incluir o termo 
+(1 + gdpPercap_log_z | ano). 
+As inclinações do PIB específicas do país mudam ao longo do tempo agora:
+
+
 ```{r}
-# Different slopes in each year!
 model_gdp_country_year_year %>% 
   emtrends(~ year + country,
            var = "gdpPercap_log_z",
            at = list(year = c(0, 5), country = countries$country),
            epred = TRUE, re_formula = NULL)
-##  year country      gdpPercap_log_z.trend lower.HPD upper.HPD
-##     0 Egypt                         0.96     -4.49      7.03
-##     5 Egypt                         0.81     -4.95      6.56
-##     0 Sierra Leone                  4.70      1.18      8.08
-##     5 Sierra Leone                  4.53      1.05      7.93
-##     0 Pakistan                      3.95     -1.40      9.39
-##     5 Pakistan                      3.82     -1.45      9.27
-##     0 Yemen, Rep.                   2.37     -2.21      7.09
-##     5 Yemen, Rep.                   2.24     -2.47      6.85
-##     0 Bolivia                       1.88     -2.49      6.60
-##     5 Bolivia                       1.73     -2.64      6.44
-##     0 Canada                        5.79      0.39     11.73
-##     5 Canada                        5.65      0.11     11.42
-##     0 Italy                         4.93     -1.02     10.33
-##     5 Italy                         4.78     -0.92     10.35
-##     0 Portugal                      5.35     -0.57     10.77
-##     5 Portugal                      5.21     -0.44     10.83
-## 
-## Point estimate displayed: median 
-## HPD interval probability: 0.95
+
 ```
+
+
+Podemos ver essa mudança com base no tempo fazendo uma versão um pouco mais elaborada de nosso gráfico de efeito marginal médio específico do país. Mostraremos a distribuição posterior para cada ano dentro de cada país usando a biblioteca ridgeplots. Também vamos sombrear os intervalos confiáveis aqui usando a estética fill_ramp em vez de mostrar um ponto e uma linha, uma vez que ficaria muito visualmente ocupado de outra forma.
+Em alguns países como Egito e Canadá, o efeito do PIB é razoavelmente constante ao longo do tempo. Em outros, como Serra Leoa, você pode ver o efeito do PIB encolher ligeiramente nas décadas de 1980 e 1990, e aumentar novamente depois disso.
 
 ```{r}
 ame_model_gdp_country_year_year <- model_gdp_country_year_year %>% 
@@ -861,15 +760,16 @@ ggplot(pred_model_gdp_country_year_year, aes(x = .value, fill = year)) +
         plot.subtitle = element_text(family = "Consolas"))
 ```
 
+
+Finalmente, podemos calcular alguns efeitos marginais médios agregados para falar sobre o efeito geral da riqueza sobre a saúde. Vamos, primeiro, encontrar a grande média global, e, depois, calcular o efeito médio em nosso falso país em Atlantis em um falso ano de 2020. Por fim, vamos calcular o efeito médio em Atlantis ao longo do tempo.
+
 ```{r}
-# Calculate the overall global effect
-# `re_formula = NA` means that no random effects will be incorporated
+
 ame_global_gdp_country_year_year <- model_gdp_country_year_year %>% 
   emtrends(~ 1,
            var = "gdpPercap_log_z",
            epred = TRUE, re_formula = NA)
 
-# Get the posterior distribution of this global effect and make a plot
 pred_global_gdp_country_year_year <- ame_global_gdp_country_year_year %>% 
   gather_emmeans_draws() %>% 
   mutate(.value = (.value / gdp_log_sd) / 10) %>% 
@@ -889,11 +789,7 @@ plot_global_gdp_country_year_year <- ggplot(pred_global_gdp_country_year_year, a
   theme(panel.grid.major.y = element_blank(),
         strip.text = element_text(size = rel(1.1)))
 
-# Calculate the effect for Atlantis in 2020
-# `re_formula = NULL` means the full random effects structure will be
-# incorporated. `allow_new_levels` lets R deal with a new country, and
-# `sample_new_levels = "gaussian"` means that the characteristics for this new
-# country will be based on random draws from the model
+
 ame_hypo1_gdp_country_year_year <- model_gdp_country_year_year %>% 
   emtrends(~ country + year,
            var = "gdpPercap_log_z",
@@ -901,17 +797,11 @@ ame_hypo1_gdp_country_year_year <- model_gdp_country_year_year %>%
            epred = TRUE, re_formula = NULL, 
            allow_new_levels = TRUE, sample_new_levels = "gaussian")
 
-# Atlantis median 2020 effect
 ame_hypo1_gdp_country_year_year %>% 
   gather_emmeans_draws() %>% 
   mutate(.value = (.value / gdp_log_sd) / 10) %>% 
   median_hdci()
-## # A tibble: 1 × 8
-##   country   year .value .lower .upper .width .point .interval
-##   <fct>    <dbl>  <dbl>  <dbl>  <dbl>  <dbl> <chr>  <chr>    
-## 1 Atlantis    68  0.331 -0.220  0.903   0.95 median hdci
 
-# Get the posterior distribution of this Atlantis effect and make a plot
 pred_hypo1_gdp_country_year_year <- ame_hypo1_gdp_country_year_year %>% 
   gather_emmeans_draws() %>% 
   mutate(.value = (.value / gdp_log_sd) / 10) %>% 
@@ -930,7 +820,6 @@ plot_hypo1_gdp_country_year_year <- ggplot(pred_hypo1_gdp_country_year_year, aes
   theme(panel.grid.major.y = element_blank(),
         strip.text = element_text(size = rel(1.1)))
 
-# Calculate the effect for Atlantis across all existing years
 ame_hypo_gdp_country_year_year <- model_gdp_country_year_year %>% 
   emtrends(~ country + year,
            var = "gdpPercap_log_z",
@@ -938,7 +827,6 @@ ame_hypo_gdp_country_year_year <- model_gdp_country_year_year %>%
            epred = TRUE, re_formula = NULL, 
            allow_new_levels = TRUE, sample_new_levels = "gaussian")
 
-# Get the posterior distribution of this Atlantis effect and make a plot
 pred_hypo_gdp_country_year_year <- ame_hypo_gdp_country_year_year %>% 
   gather_emmeans_draws() %>% 
   mutate(.value = (.value / gdp_log_sd) / 10) %>% 
@@ -961,7 +849,6 @@ plot_hypo_gdp_country_year_year <- ggplot(pred_hypo_gdp_country_year_year, aes(x
   theme(panel.grid.major.y = element_blank(),
         strip.text = element_text(size = rel(1.1)))
 
-# Show all the AME distributions in a mega plot
 ((plot_global_gdp_country_year_year / plot_hypo1_gdp_country_year_year) | 
     plot_hypo_gdp_country_year_year) +
   plot_annotation(title = paste0("Average marginal effect of GDP per capita", "\n",
@@ -974,66 +861,15 @@ plot_hypo_gdp_country_year_year <- ggplot(pred_hypo_gdp_country_year_year, aes(x
                   theme = theme_clean() + theme(plot.subtitle = element_text(family = "Consolas")))
 ```
 
-Each continent and nested country gets its own intercept and GDP and year slopes
-```{r}
-model_gdp_continent_country_year <- brm(
-  bf(lifeExp ~ gdpPercap_log_z + year + 
-       (1 + gdpPercap_log_z + year | continent / country),
-     decomp = "QR"),
-  data = gapminder,
-  cores = 4, chains = 4, seed = bayes_seed,
-  threads = threading(2)  # Two CPUs per chain to speed things up
-)
-```
 
-```{r}
-# You'd use this to calculate the continent/country specific effects
-model_gdp_continent_country_year %>%
-  emtrends(~ year + continent:country,
-           var = "gdpPercap_log_z",
-           at = list(year = c(0), country = countries$country),
-           nesting = "country %in% continent",
-           epred = TRUE, re_formula = NULL, allow_new_levels = TRUE)
-```
 
-```{r}
-fit <- lme4::lmer(
-  weight ~ 1 + Time + I(Time^2) + Diet + Time:Diet + I(Time^2:Diet) + 
-    (1 + Time + I(Time^2) | Chick),
-  data = ChickWeight
-)
-```
 
-```{r}
-bf(outcome ~ x + year + (1 | country))
-```
 
-```{r}
-bf(outcome ~ x + year + (1 + year | country))
-```
 
-```{r}
-bf(outcome ~ x + year + (1 + x + year | country))
 
-```
 
-```{r}
-bf(outcome ~ x + year + (1 | year) + (1 + x + year | country))
-```
 
-```{r}
-bf(outcome ~ x + year + (1 + x + year | continent / country))
-```
 
-```{r}
-bf(outcome ~ x + year + (1 + x | year) + (1 + x + year | continent / country))
-```
 
-```{r}
-```
 
-```{r}
-```
 
-```{r}
-```
